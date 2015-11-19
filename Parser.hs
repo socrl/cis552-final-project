@@ -2,10 +2,14 @@
 module Parser where
 
 
-{-
-URL -> Domain
 
-Domain -> its robots.txt
+
+
+
+{-
+
+
+
 
 robots.txt String -> [(allowed URL, permitted frequency)]
 

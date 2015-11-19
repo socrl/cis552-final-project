@@ -1,7 +1,12 @@
 {-# OPTIONS -Wall -fwarn-tabs -fno-warn-type-defaults  #-}
 module Downloader where
 
+import Network.URL
 
+type Result = (URL, String)
+
+sendReqs :: String -> String -> Int -> Either [Result] String
+sendReqs = undefined
 {-
 1. receive URL, search string, num pages from Main
 
