@@ -1,6 +1,10 @@
 {-# OPTIONS -Wall -fwarn-tabs -fno-warn-type-defaults  #-}
 module Main where
 
+import Downloader (Result)
+
+startCrawl :: String -> String -> Int -> Either [Result] String
+startCrawl = undefined
 
 {-
 1. tell CL to get starting URL, search string, num pages to crawl from user

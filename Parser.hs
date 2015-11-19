@@ -1,13 +1,24 @@
 {-# OPTIONS -Wall -fwarn-tabs -fno-warn-type-defaults  #-}
 module Parser where
 
+type Robot = ([RelPath], Int)
+
+type RelPath = String
+
+getSnips :: String -> String -> [String]
+getSnips = undefined
+
+parseRobot :: String -> Robot
+parseRobot = undefined
+
+
 
 {-
-URL -> Domain
 
-Domain -> its robots.txt
 
-robots.txt String -> [(allowed URL, permitted frequency)]
+
+
+robots.txt String -> [disallowed URL], permitted frequency
 
 HTML String -> Search String -> [Snippet String]
 
