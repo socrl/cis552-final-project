@@ -1,5 +1,4 @@
 {-# OPTIONS -Wall -fwarn-tabs -fno-warn-type-defaults  #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 module PageParser where
 import qualified Parser as P
@@ -7,17 +6,20 @@ import qualified ParserCombinators as P
 
 import Control.Applicative (Alternative(..))
 
-type Robot = ([RelPath], Int)
+type Robot = ([LineInfo], Int)
 type RelPath = String
-
+data LineInfo =
+    Allow RelPath
+  | Disallow RelPath
+  | Comment 
+  | CrawlDelay Int 
+  deriving (Eq, Show)
 
 getSnips :: String -> String -> [String]
 getSnips = undefined
 
 parseRobot :: String -> Robot
-parseRobot _ = undefined {-retrieval $ lines s where
-	retrieval []     = ([], 0)
-	retrieval (l:ls) = case words l of-} 
+parseRobot s = undefined --P.doParse $ many (notOurUserAgentP <|> userAgentP)
 
 -- | Applies a parser and then skips over any whitespace directly after it
 wsP :: P.Parser a -> P.Parser a
@@ -25,28 +27,41 @@ wsP p = do n <- p
            _ <- many P.space             
            return n
 
-disallowUrlP :: P.Parser (String, Bool) 
-disallowUrlP = do _ <- wsP $ P.string "Disallow:"
-                  l <- relUrlP 
-                  _ <- wsP $ untilEOL
-                  return (l, False) 
-
-allowUrlP :: P.Parser (String, Bool) 
-allowUrlP = do _ <- wsP $ P.string "Allow:"
-               l <- relUrlP 
-               _ <- wsP $ untilEOL
-               return (l, True) 
-
-userAgentP :: P.Parser [(String, Bool)]
+userAgentP :: P.Parser [LineInfo]
 userAgentP = do _ <- many commentP
                 _ <- wsP $ P.string "User-agent:"
                 _ <- wsP $ P.char '*'
-                out <- many (allowUrlP <|> disallowUrlP)
+                out <- lineInfoP
                 return out
 
-newline :: P.Parser () 
-newline = do _ <- wsP $ P.char '\n'
-             return ()
+notOurUserAgentP :: P.Parser [LineInfo]
+notOurUserAgentP = do _ <- many commentP
+                      _ <- wsP $ P.string "User-agent:"
+                      _ <- P.satisfy (/= '*')
+                      _ <- wsP $ untilEOL
+                      _ <- lineInfoP
+                      return []
+
+lineInfoP :: P.Parser [LineInfo]
+lineInfoP = many (allowUrlP <|> disallowUrlP <|> crawlDelayP <|> commentP)
+
+disallowUrlP :: P.Parser LineInfo 
+disallowUrlP = do _ <- wsP $ P.string "Disallow:"
+                  l <- relUrlP 
+                  _ <- wsP $ untilEOL
+                  return $ Disallow l 
+
+allowUrlP :: P.Parser LineInfo 
+allowUrlP = do _ <- wsP $ P.string "Allow:"
+               l <- relUrlP 
+               _ <- wsP $ untilEOL
+               return $ Allow l 
+
+crawlDelayP :: P.Parser LineInfo
+crawlDelayP = do _ <- wsP $ P.string "Crawl-delay:"
+                 n <- P.int 
+                 _ <- wsP $ untilEOL
+                 return $ CrawlDelay n 
 
 untilEOL :: P.Parser String
 untilEOL = many $ P.satisfy (/= '\n')
@@ -54,8 +69,7 @@ untilEOL = many $ P.satisfy (/= '\n')
 relUrlP :: P.Parser String
 relUrlP = many $ P.satisfy (\x -> x /= '\n' && x /= '#')
 
-commentP :: P.Parser String
+commentP :: P.Parser LineInfo
 commentP = do _ <- P.char '#'
-              c <- untilEOL
-              _ <- newline
-              return c
+              _ <- wsP $ untilEOL
+              return Comment
