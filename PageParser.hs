@@ -25,23 +25,23 @@ wsP p = do n <- p
            _ <- many P.space             
            return n
 
-disallow :: P.Parser String 
-disallow = wsP $ P.string "Disallow:"
+disallowUrlP :: P.Parser (String, Bool) 
+disallowUrlP = do _ <- wsP $ P.string "Disallow:"
+                  l <- relUrlP 
+                  _ <- wsP $ untilEOL
+                  return (l, False) 
 
-allow :: P.Parser String 
-allow = wsP $ P.string "Allow:"
+allowUrlP :: P.Parser (String, Bool) 
+allowUrlP = do _ <- wsP $ P.string "Allow:"
+               l <- relUrlP 
+               _ <- wsP $ untilEOL
+               return (l, True) 
 
-permitUrlP :: P.Parser String
-permitUrlP = do _ <- disallow <|> allow
-                l <- relUrlP 
-                _ <- wsP $ untilEOL
-                return l 
-
-userAgentP :: P.Parser [String]
+userAgentP :: P.Parser [(String, Bool)]
 userAgentP = do _ <- many commentP
                 _ <- wsP $ P.string "User-agent:"
                 _ <- wsP $ P.char '*'
-                out <- many permitUrlP
+                out <- many (allowUrlP <|> disallowUrlP)
                 return out
 
 newline :: P.Parser () 
