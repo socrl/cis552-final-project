@@ -19,14 +19,75 @@ notOurUserAgent :: String
 notOurUserAgent = "User-agent: Mediapartners-Google*\nDisallow: /\n"
 
 agentCommentMix :: String
-agentCommentMix = multilineComment ++ notOutUserAgent ++ "\n# Wikipedia work bots:\nUser-agent: *\nDisallow:\n"
+agentCommentMix = multilineComment ++ notOurUserAgent ++ "\n# Wikipedia work bots:\nUser-agent: *\nDisallow: /\n"
 
 validUserAgent :: String 
-validUserAgent = "User-agent: *\nDisallow: /search\nAllow: /search/about\nDisallow: /sdch\nDisallow: /groups\nDisallow: /catalogs\nAllow: /catalogs/about\nAllow: /catalogs/p?\nDisallow: /catalogues\nAllow: /newsalerts\nDisallow: /news\nAllow: /news/directory\nDisallow: /nwshp\nDisallow: /setnewsprefs?\nDisallow: /index.html?\nDisallow: /?\nAllow: /?hl=\nDisallow: /?hl=*&\nAllow: /?hl=*&gws_rd=ssl$\nDisallow: /?hl=*&*&gws_rd=ssl\nAllow: /?gws_rd=ssl$\nAllow: /?pt1=true$\nDisallow: /addurl/image?\nAllow:    /mail/help/\nDisallow: /mail/\nDisallow: /pagead/\nDisallow: /relpage/\nDisallow: /relcontent\nDisallow: /imgres\nDisallow: /imglanding\nDisallow: /sbd\nDisallow: /keyword/\nDisallow: /u/\nDisallow: /univ/\nDisallow: /cobrand\nDisallow: /custom\nDisallow: /advanced_group_search\nDisallow: /googlesite\nDisallow: /preferences\nDisallow: /setprefs\nDisallow: /swr\nDisallow: /url\nDisallow: /default\nDisallow: /m?\nDisallow: /m/\nAllow:    /m/finance\nDisallow: /wml?\nDisallow: /wml/?\nDisallow: /wml/search?\nDisallow: /xhtml?\nDisallow: /xhtml/?\nDisallow: /xhtml/search?\nDisallow: /xml?\nDisallow: /imode?\nDisallow: /imode/?\nDisallow: /imode/search?\nDisallow: /jsky?\nDisallow: /jsky/?\nDisallow: /jsky/search?\nDisallow: /pda?\nDisallow: /pda/?\nDisallow: /pda/search?\nDisallow: /sprint_xhtml\nDisallow: /sprint_wml\nDisallow: /pqa\nDisallow: /palm\nDisallow: /gwt/\nDisallow: /purchases\nDisallow: /bsd?\nDisallow: /linux?\nDisallow: /mac?\nDisallow: /microsoft?\nDisallow: /unclesam?\nDisallow: /answers/search?q=\nDisallow: /local?\nDisallow: /local_url\nDisallow: /shihui?\nDisallow: /shihui/\nDisallow: /froogle?\nDisallow: /products?\nDisallow: /froogle_\nDisallow: /product_\nDisallow: /products_\nDisallow: /products;\nDisallow: /print\nDisallow: /books/\nDisallow: /bkshp?*q=*\nDisallow: /books?*q=*\nDisallow: /books?*output=*\nDisallow: /books?*pg=*\nDisallow: /books?*jtp=*\n"
+validUserAgent = "User-agent: *\nDisallow: /search\nAllow: /search/about\nDisallow: /sdch\nDisallow: /groups\nDisallow: /catalogs\nAllow: /catalogs/about\nAllow: /catalogs/p?\nDisallow: /catalogues\n"
 
 userAgentInlineComment :: String
 userAgentInlineComment = "User-agent: *\nDisallow: /search\nAllow: /search/about # COMMENTARY\nDisallow: /sdch\n"
 
 validRobotsPg :: String
 validRobotsPg = multilineComment ++ notOurUserAgent ++ "\nUser-agent: Orthogaffe\nDisallow:\n" ++ comment ++ validUserAgent ++ comment ++ "Disallow: /wiki/Wikipedia:Strony_do_usuni%C4%99cia\n"
+
+userAgentCrawlDelay :: String
+userAgentCrawlDelay = "User-agent: *\nCrawl-delay: 10\nDisallow: /search\nAllow: /search/about\nDisallow: /sdch\n"
+
+fullRobotsTxt :: String
+fullRobotsTxt = multilineComment ++ notOurUserAgent ++ userAgentCrawlDelay ++ "\nSitemap: https://www.yahoo.com/food/sitemaps/sitemap_index_us_en-US.xml.gz"
+
+tParseComment :: Test
+tParseComment = "1-line comment" ~: P.parse P.commentP comment ~?= Right P.Comment
+
+tParseMultiComment :: Test
+tParseMultiComment = "multiline comment" ~: P.parse P.multiCommentP multilineComment 
+                                         ~?= Right P.Comment
+
+tParseNotOurUserAgent :: Test
+tParseNotOurUserAgent = "parser ignores this user agent" ~: TestList [
+  "not our agent success"   ~: P.parse P.notOurUserAgentP notOurUserAgent 
+                            ~?= Right [],
+  -- | our "not our user agent" parser should fail when presented with the 
+  --   agent we should be parsing for.
+  "not our agent fail"      ~: P.parse P.notOurUserAgentP validUserAgent
+                            ~?= Left "No parses" ]
+
+
+tParseTgtUserAgent :: Test
+tParseTgtUserAgent = "parser returns this agent's info" ~: TestList [
+  "tgt agent success"    ~: P.parse P.userAgentP validUserAgent
+                  ~?= Right [P.Disallow "/search",   P.Allow "/search/about",
+                             P.Disallow "/sdch",     P.Disallow "/groups", 
+                             P.Disallow "/catalogs", P.Allow "/catalogs/about", 
+                             P.Allow "/catalogs/p?", P.Disallow "/catalogues"],
+   "tgt agent crawl del" ~: P.parse P.userAgentP userAgentCrawlDelay
+                  ~?= Right [P.CrawlDelay 10,         
+                             P.Disallow "/search",   P.Allow "/search/about",
+                             P.Disallow "/sdch"],
+   "not our agent fail"  ~: P.parse P.userAgentP notOurUserAgent
+                  ~?= Left "No parses" ]
+
+
+tParseRobotsTxt :: Test
+tParseRobotsTxt = "parser for the robots.txt" ~: TestList [
+  "simple comments and agents" ~: P.parse P.robotP agentCommentMix 
+            ~?= Right [[], [P.Disallow "/"]],
+  "agent with in-line comment" ~: P.parse P.robotP userAgentInlineComment
+            ~?= Right [[P.Disallow "/search",   P.Allow "/search/about",
+                        P.Disallow "/sdch"]],
+  "example robots.txt file"    ~: P.parse P.robotP validRobotsPg
+            ~?= Right [[],[],
+                      [P.Disallow "/search",   P.Allow "/search/about",
+                       P.Disallow "/sdch",     P.Disallow "/groups",
+                       P.Disallow "/catalogs", P.Allow "/catalogs/about",
+                       P.Allow "/catalogs/p?", P.Disallow "/catalogues",
+                       P.Comment,
+                       P.Disallow "/wiki/Wikipedia:Strony_do_usuni%C4%99cia"]],
+  "robots with sitemap"       ~: P.parse P.robotP fullRobotsTxt
+            ~?= Right [[],
+                       [P.CrawlDelay 10,         
+                             P.Disallow "/search",   P.Allow "/search/about",
+                             P.Disallow "/sdch"]] ]
+
+
 
