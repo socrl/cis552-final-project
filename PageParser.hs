@@ -18,7 +18,19 @@ getSnips :: String -> String -> [String]
 getSnips = undefined
 
 parseRobot :: String -> Robot
-parseRobot = undefined
+parseRobot s = 
+  case P.parse robotP s of 
+    Left _  -> ([], 1)
+    Right l -> let ua = foldr (\x rs -> if x == [] then rs else x++rs) [] l in
+      (retRobot ua, crawlDel ua) where 
+      retRobot []                     = []
+      retRobot (a@(Allow _):xs)       = a:retRobot xs
+      retRobot (da@(Disallow _):xs)   = da:retRobot xs
+      retRobot (_:xs)                 = retRobot xs 
+
+      crawlDel []                  = 1
+      crawlDel ((CrawlDelay n):_)  = n 
+      crawlDel (_:xs)              = crawlDel xs
 
 robotP :: P.Parser [[LineInfo]]
 robotP = many (notOurUserAgentP <|> userAgentP)
