@@ -4,6 +4,7 @@ module PageParser where
 import qualified Parser as P
 import qualified ParserCombinators as P
 import Control.Applicative (Alternative(..))
+import Text.Regex
 
 type Robot = ([LineInfo], Int)
 type RelPath = String
@@ -15,7 +16,16 @@ data LineInfo =
   deriving (Eq, Show)
 
 getSnips :: String -> String -> [String]
-getSnips = undefined
+getSnips query fulltext = snips (mkRegex query) fulltext where 
+  snips rx s = 
+    case matchRegexAll rx s of 
+      Nothing -> [] 
+      Just (b, m, a, _) -> 
+         let n1 = min (length b) 60 in 
+         let n2 = min (length a) 60 in 
+         let snip1 = foldl (const . drop 1) b (drop n1 b) in
+         let (snip2, remain) = splitAt n2 a in
+         (snip1 ++ m ++ snip2):(snips rx remain)
 
 parseRobot :: String -> Robot
 parseRobot s = 

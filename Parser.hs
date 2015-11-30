@@ -44,7 +44,6 @@ instance Applicative Parser where
    pure   = return
    (<*>)  = ap
 
-
 instance Functor Parser where
    fmap = liftA
 
@@ -52,7 +51,6 @@ instance Functor Parser where
 -- possible results from either parser.                 
 choose :: Parser a -> Parser a -> Parser a
 p1 `choose` p2 = P (\cs -> doParse p1 cs ++ doParse p2 cs)
-
 
 instance Alternative Parser where  
   -- the parser that always fails
@@ -64,4 +62,3 @@ instance Alternative Parser where
                           []   -> []
                           x:_ -> [x]
   
-

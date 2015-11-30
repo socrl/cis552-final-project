@@ -36,7 +36,6 @@ parseFromFile parser filename = do
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy p = do c <- get
                if (p c) then return c else empty
-  
     
 -- | Parsers for specific sorts of characters 
 alpha, digit, upper, lower, space :: Parser Char
