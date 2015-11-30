@@ -1,14 +1,31 @@
 {-# OPTIONS -Wall -fwarn-tabs -fno-warn-type-defaults  #-}
 module UrlUtils where
 
-getDomain :: String -> String
-getDomain = undefined
+import Data.List.Split
+import Data.List
+import Data.Maybe
+import Network.URL
 
-getRelativePath :: String -> String
-getRelativePath = undefined
+-- | given absolute URL, get domain (if any)
+getDomain :: String -> Maybe String
+getDomain s = importURL s >>= \ x -> case url_type x of
+  Absolute h -> Just $ host h
+  _ -> Nothing
 
-getType :: String -> String
-getType = undefined
+-- | given URL, get relative path (exclude domain and all preceding it)
+getRelativePath :: String -> Maybe String
+getRelativePath s = importURL s >>= Just . url_path
 
-matchPath :: String -> String -> Boolean
-matchPath = undefined
+-- | given URL, get the type of document .type at the end
+getType :: String -> Maybe String
+getType s = getRelativePath s >>= parseType
+
+-- | given relative path, get the type of the document
+parseType :: String -> Maybe String
+parseType s =
+  if isJust $ find ((==) '.') s then Just $ last $ splitOn "." s else Nothing
+
+-- | given absolute URL and relative URL, return whether the relative path is
+-- part of the absolute path
+matchPath :: String -> String -> Bool
+matchPath = flip isInfixOf
