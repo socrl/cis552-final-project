@@ -13,14 +13,14 @@ getDomain s = importURL s >>= \ x -> case url_type x of
   _ -> Nothing
 
 -- | given URL, get relative path (exclude domain and all preceding it)
-getRelativePath :: String -> Maybe String
-getRelativePath s = importURL s >>= Just . url_path
+getRelPath :: String -> Maybe String
+getRelPath s = importURL s >>= Just . url_path
 
 -- | given URL, get the type of document .type at the end
 getType :: String -> Maybe String
-getType s = getRelativePath s >>= parseType
+getType s = getRelPath s >>= parseType
 
--- | given relative path, get the type of the document
+-- | given relative URL, get the type of the document
 parseType :: String -> Maybe String
 parseType s =
   if isJust $ find ((==) '.') s then Just $ last $ splitOn "." s else Nothing
@@ -28,4 +28,7 @@ parseType s =
 -- | given absolute URL and relative URL, return whether the relative path is
 -- part of the absolute path
 matchPath :: String -> String -> Bool
-matchPath = flip isInfixOf
+matchPath a r = maybe False f (getRelPath a) where
+    f x =  isInfixOf r x ||
+      if not (null r) && head r == '/' then isInfixOf (tail r) x
+      else False
