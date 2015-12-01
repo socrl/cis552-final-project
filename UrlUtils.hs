@@ -10,5 +10,5 @@ getRelativePath = undefined
 getType :: String -> String
 getType = undefined
 
-matchPath :: String -> String -> Boolean
+matchPath :: String -> String -> Bool
 matchPath = undefined
