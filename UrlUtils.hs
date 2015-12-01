@@ -32,3 +32,4 @@ matchPath a r = maybe False f (getRelPath a) where
     f x =  isInfixOf r x ||
       if not (null r) && head r == '/' then isInfixOf (tail r) x
       else False
+

@@ -1,12 +1,44 @@
 {-# OPTIONS -Wall -fwarn-tabs -fno-warn-type-defaults  #-}
 module Downloader where
 
-import Network.URL
+import Queue
+import UrlUtils
+import Data.Time.Clock
+import Data.HashSet
 
-type Result = (URL, String)
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+import State (State)
+import qualified State as S
+
+
+type Result = (String, String)
+
+type Frontier   = Queue String
+type Visited    = HashSet String
+type ServerInfo = Map String (Int, Int)
+
+type Status = (Frontier, Visited, ServerInfo, [Result])
 
 sendReqs :: String -> String -> Int -> Either [Result] String
 sendReqs = undefined
+
+execute :: Int -> Int -> State Status ()
+execute ord lim | ord > lim = return ()
+				| otherwise = do
+  (f, v, s, rl) <- S.get
+  case dequeue f of 
+  	Nothing        -> return ()
+  	Just (url, f') -> 
+  	  case getDomain url >>= (\host -> Map.lookup host s) of
+  	  	-- server not visited before, requesting robots.txt info
+  	  	Nothing            -> undefined 
+  	  	-- server requested before, having robots.txt info
+  	  	Just (lst_v, freq) -> undefined
+
+
+
 {-
 1. receive URL, search string, num pages from Main
 
@@ -25,3 +57,4 @@ sendReqs = undefined
 4. return the (URL, snippets)
 
 -}
+
