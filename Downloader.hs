@@ -12,6 +12,7 @@ import Control.Monad
 import Data.Time.Clock
 import Data.Maybe
 import Control.Monad.Trans.Maybe
+import Control.Exception.Base
 import Control.Monad.State
 import Control.Monad.IO.Class
 import Text.HandsomeSoup
@@ -87,7 +88,9 @@ execute query ord lim | ord > lim = return ()
 
 
 fetchContents :: (MonadIO m) => String -> m (Maybe String)
-fetchContents = liftIO . runMaybeT . openUrl
+fetchContents url = liftIO $ catch ((liftIO . runMaybeT . openUrl) url) 
+                                   (\e -> return Nothing `const` 
+                                          (e :: IOException))
 
 -- check if the url can be crawled, 
 -- 0  - can crawl but need wait; 
