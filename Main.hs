@@ -20,3 +20,6 @@ startCrawl = undefined
 
 -}
 
+main :: IO ()
+main = do
+  return ()
