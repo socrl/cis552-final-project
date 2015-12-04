@@ -1,6 +1,7 @@
 {-# OPTIONS -Wall -fwarn-tabs -fno-warn-type-defaults  #-}
 module Main where
 
+import Text.Read
 import Downloader (Result)
 
 startCrawl :: String -> String -> Int -> Either [Result] String
@@ -18,3 +19,4 @@ startCrawl = undefined
 
 
 -}
+

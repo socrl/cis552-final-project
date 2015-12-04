@@ -29,6 +29,15 @@ parseType s =
 -- part of the absolute path
 matchPath :: String -> String -> Bool
 matchPath a r = maybe False f (getRelPath a) where
-    f x =  isInfixOf r x ||
-      if not (null r) && head r == '/' then isInfixOf (tail r) x
-      else False
+    f x = validPrefix r x ||
+            if not (null r) && head r == '/' then validPrefix (tail r) x
+            else False
+    validPrefix [p]    (s:sl:_) = p == s && (p == '/' || sl == '/')
+    validPrefix (p:ps) (s:st)   = if p == s then validPrefix ps st else False
+    validPrefix []     _        = True
+    validPrefix _      _        = False
+
+
+
+
+

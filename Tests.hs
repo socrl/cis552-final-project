@@ -86,14 +86,14 @@ tMatchPath2 = matchPath "https://hackage.haskell.org/package/base-4.8.1.0/docs/D
 
 tMatchPath3 :: Test
 tMatchPath3 = matchPath "https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-List.html" "docs/Data-List.html"
-  ~?= True
+  ~?= False
 
 tMatchPath4 :: Test
 tMatchPath4 = matchPath "https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-List.html" "https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-List.html"
   ~?= False
 
 tMatchPath5 :: Test
-tMatchPath5 = matchPath "https://global.upenn.edu/isss/opt" "opt" ~?= True
+tMatchPath5 = matchPath "https://global.upenn.edu/isss/opt" "opt" ~?= False
 
 tMatchPath6 :: Test
 tMatchPath6 = matchPath "https://global.upenn.edu/isss/opt" "u/isss/opt"
@@ -103,6 +103,38 @@ tMatchPath7 :: Test
 tMatchPath7 = matchPath "https://global.upenn.edu/isss/opt" "/isss/opt"
   ~?= True
 
+tMatchPath8 :: Test
+tMatchPath8 = matchPath "https://global.upenn.edu/isss/opt" "/isss/o"
+  ~?= False
+
+tMatchPath9 :: Test
+tMatchPath9 = matchPath "https://global.upenn.edu/isss/opt" "isss/opt"
+  ~?= True
+
+tMatchPath10 :: Test
+tMatchPath10 = matchPath "https://global.upenn.edu/isss/opt" "isss/opt/"
+  ~?= False
+
+tMatchPath11 :: Test
+tMatchPath11 = matchPath "https://global.upenn.edu/isss/opt" "/isss/"
+  ~?= True
+
+tMatchPath12 :: Test
+tMatchPath12 = matchPath "https://global.upenn.edu/isss/opt" "isss/"
+  ~?= True
+
+tMatchPath13 :: Test
+tMatchPath13 = matchPath "https://global.upenn.edu/isss/opt" "/isss"
+  ~?= True
+
+tMatchPath14 :: Test
+tMatchPath14 = matchPath "https://global.upenn.edu/isss/opt" "isss"
+  ~?= True
+
+tMatchPath15 :: Test
+tMatchPath15 = matchPath "https://global.upenn.edu/isss/opt" "iss"
+  ~?= False
+
 main :: IO ()
 main = do
   _ <- runTestTT $ TestList [tDom1, tDom2, tDom3, tDom4, tDom5, tDom6, tDom7,
@@ -110,5 +142,7 @@ main = do
                              tRelPath5, tRelPath6, tRelPath7, tType1, tType2,
                              tType3, tType4, tType5, tType6, tMatchPath1,
                              tMatchPath2, tMatchPath3, tMatchPath4, tMatchPath5,
-                             tMatchPath6, tMatchPath7]
+                             tMatchPath6, tMatchPath7, tMatchPath8, tMatchPath9,
+                             tMatchPath10, tMatchPath11, tMatchPath12,
+                             tMatchPath13, tMatchPath14, tMatchPath15]
   return ()
