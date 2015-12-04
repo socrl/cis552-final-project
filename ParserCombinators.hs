@@ -76,7 +76,6 @@ p `chainl1` pop = p >>= rest
                       y <- p
                       rest $ x `o` y 
                       
-                      
 -- | Combine all parsers in the list (sequentially)
 choice :: [Parser a] -> Parser a
 choice = foldr (<|>) (fail "")
@@ -98,5 +97,3 @@ sepBy p sep = sepBy1 p sep <|> return []
 --   Returns a list of values returned by @p@.
 sepBy1 :: Parser a -> Parser sep -> Parser [a]
 sepBy1 p sep = liftM2 (:) p (many (sep >> p))
-
-
