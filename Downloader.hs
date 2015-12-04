@@ -39,11 +39,11 @@ type Status = (Frontier, Visited, ServerInfo, [Result])
 
 -- API for top level function, pass in a starting URL address,
 -- a search query and upper limit of # of pages to crawl
-sendReqs :: String -> String -> Int -> IO [Result]
+sendReqs :: String -> String -> Int -> IO ([Result], Int)
 sendReqs url query lim = do 
-  (_, (_, v, s, rl)) <- runStateT (execute query 0 lim) 
+  (_, (_, v, _, rl)) <- runStateT (execute query 0 lim) 
                         (single url, Hashset.empty, Map.empty, [])
-  return rl
+  return (rl, size v)
 
 -- Main execution method, responsible for scheduling tasks, sending
 -- HTTP request, pass web content to parser and storing results 
@@ -94,12 +94,13 @@ fetchContents = liftIO . runMaybeT . openUrl
 -- 1  - can crawl right now; 
 -- -1 - cannot crawl
 canCrawl :: (MonadIO m) => Robot -> UTCTime -> String -> m Int
-canCrawl (ll, c_del) l_vt url = do 
+canCrawl (ll, delay) last_vt url = do 
   if not $ pathAllow ll url then return (-1)
     else do
       currT <- liftIO getCurrentTime
-      if ((realToFrac $ diffUTCTime currT l_vt :: Double) < 
-          (fromIntegral c_del :: Double)) then return 0 
+      -- check if enough time has passed since last site visit
+      if ((realToFrac $ diffUTCTime currT last_vt :: Double) < 
+          (fromIntegral delay :: Double)) then return 0 
       else return 1
 
 -- Check if the url is allowed to crawl
