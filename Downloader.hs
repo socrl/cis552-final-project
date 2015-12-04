@@ -22,7 +22,7 @@ import qualified Data.HashSet as Hashset
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-type Result = (String, [String])
+type Result = (String, String)
 
 type Frontier   = Queue String
 type Visited    = HashSet String
@@ -87,10 +87,10 @@ execute query ord lim | ord >= lim = return ()
                 put (f', v, s, rl)
                 execute query (ord+1) lim
               Just result -> do 
-                (urls, snipss) <- liftIO result
+                (urls, doc) <- liftIO result
                 let v'  = Hashset.insert url v
                     f'' = Prelude.foldr (\u front -> enqueue u front) f' urls
-                put (f'', v', s, (url, snipss) : rl)
+                put (f'', v', s, (url, doc) : rl)
                 execute query (ord+1) lim
 
 
