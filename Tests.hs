@@ -66,7 +66,7 @@ tRelPath7 :: Test
 tRelPath7 = getRelPath "" ~?= Just ""
 
 tType1 :: Test
-tType1 = getType "https://global.upenn.edu/isss/opt#tutorial" ~?= Nothing
+tType1 = getType "https://global.upenn.edu/isss/opt#tutorial" ~?= Just "html"
 
 tType2 :: Test
 tType2 = getType "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Eraserhead.jpg/800px-Eraserhead.jpg"
@@ -80,10 +80,10 @@ tType4 :: Test
 tType4 = getType "package/base-4.8.1.0/docs/Data-List.html" ~?= Just "html"
 
 tType5 :: Test
-tType5 = getType "https://www.google.com" ~?= Nothing
+tType5 = getType "https://www.google.com" ~?= Just "html"
 
 tType6 :: Test
-tType6 = getType "https://global.upenn.edu/isss/opt" ~?= Nothing
+tType6 = getType "https://global.upenn.edu/isss/opt" ~?= Just "html"
 
 tMatchPath1 :: Test
 tMatchPath1 = matchPath "https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-List.html" "package/base-4.8.1.0/docs/Data-List.html"
