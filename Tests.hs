@@ -63,7 +63,7 @@ tRelPath6 :: Test
 tRelPath6 = getRelPath "abcde" ~?= Just "abcde"
 
 tRelPath7 :: Test
-tRelPath7 = getRelPath "" ~?= Just ""
+tRelPath7 = getRelPath "" ~?= Nothing
 
 tType1 :: Test
 tType1 = getType "https://global.upenn.edu/isss/opt#tutorial" ~?= Nothing
@@ -109,40 +109,61 @@ tMatchPath6 = matchPath "https://global.upenn.edu/isss/opt" "u/isss/opt"
   ~?= False
 
 tMatchPath7 :: Test
-tMatchPath7 = matchPath "https://global.upenn.edu/isss/opt" "/isss/opt"
-  ~?= True
+tMatchPath7 = matchPath "https://global.upenn.edu/isss/opt" "/isss/opt" ~?= True
 
 tMatchPath8 :: Test
-tMatchPath8 = matchPath "https://global.upenn.edu/isss/opt" "/isss/o"
-  ~?= False
+tMatchPath8 = matchPath "https://global.upenn.edu/isss/opt" "/isss/o" ~?= False
 
 tMatchPath9 :: Test
-tMatchPath9 = matchPath "https://global.upenn.edu/isss/opt" "isss/opt"
-  ~?= True
+tMatchPath9 = matchPath "https://global.upenn.edu/isss/opt" "isss/opt" ~?= True
 
 tMatchPath10 :: Test
 tMatchPath10 = matchPath "https://global.upenn.edu/isss/opt" "isss/opt/"
   ~?= False
 
 tMatchPath11 :: Test
-tMatchPath11 = matchPath "https://global.upenn.edu/isss/opt" "/isss/"
-  ~?= True
+tMatchPath11 = matchPath "https://global.upenn.edu/isss/opt" "/isss/" ~?= True
 
 tMatchPath12 :: Test
-tMatchPath12 = matchPath "https://global.upenn.edu/isss/opt" "isss/"
-  ~?= True
+tMatchPath12 = matchPath "https://global.upenn.edu/isss/opt" "isss/" ~?= True
 
 tMatchPath13 :: Test
-tMatchPath13 = matchPath "https://global.upenn.edu/isss/opt" "/isss"
-  ~?= True
+tMatchPath13 = matchPath "https://global.upenn.edu/isss/opt" "/isss" ~?= True
 
 tMatchPath14 :: Test
-tMatchPath14 = matchPath "https://global.upenn.edu/isss/opt" "isss"
-  ~?= True
+tMatchPath14 = matchPath "https://global.upenn.edu/isss/opt" "isss" ~?= True
 
 tMatchPath15 :: Test
-tMatchPath15 = matchPath "https://global.upenn.edu/isss/opt" "iss"
-  ~?= False
+tMatchPath15 = matchPath "https://global.upenn.edu/isss/opt" "iss" ~?= False
+
+tMatchPath16 :: Test
+tMatchPath16 = matchPath "https://global.upenn.edu/isss/opt" "" ~?= False
+
+tMatchPath17 :: Test
+tMatchPath17 = matchPath "" "" ~?= False
+
+tMatchPath18 :: Test
+tMatchPath18 = matchPath "" "a" ~?= False
+
+tCheckProt1 :: Test
+tCheckProt1 = checkProt "http://www.dcs.bbk.ac.uk/~martin/sewn/ls3/testpage.html"
+  ~?= Just True
+
+tCheckProt2 :: Test
+tCheckProt2 = checkProt "https://www.haskell.org/hoogle/"
+  ~?= Just False
+
+tCheckProt3 :: Test
+tCheckProt3 = checkProt "www.haskell.org/hoogle/"
+  ~?= Nothing
+
+tCheckProt4 :: Test
+tCheckProt4 = checkProt "hoogle"
+  ~?= Nothing
+
+tCheckProt5 :: Test
+tCheckProt5 = checkProt ""
+  ~?= Nothing
 
 -- | tests for PageParsers.hs
 
@@ -236,7 +257,9 @@ main = do
                              tMatchPath6, tMatchPath7, tMatchPath8, tMatchPath9,
                              tMatchPath10, tMatchPath11, tMatchPath12,
                              tMatchPath13, tMatchPath14, tMatchPath15,
-                             tParseComment, tParseMultiComment,
+                             tMatchPath16, tMatchPath17, tMatchPath18,
+                             tCheckProt1, tCheckProt2, tCheckProt3, tCheckProt4,
+                             tCheckProt5, tParseComment, tParseMultiComment,
                              tParseNotOurUserAgent, tParseTgtUserAgent,
                              tParseRobotsTxt]
   return ()
