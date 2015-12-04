@@ -5,15 +5,11 @@ import qualified Parser as P
 import qualified ParserCombinators as P
 import Control.Applicative (Alternative(..))
 import Text.Regex
-<<<<<<< HEAD
-import Data.Char  
-=======
 import Data.Char
 import Text.XML.HXT.Core
 import Text.HandsomeSoup
 import qualified UrlUtils as U
 import Data.List
->>>>>>> origin/master
 
 type Robot = ([LineInfo], Int)
 type RelPath = String
@@ -24,16 +20,9 @@ data LineInfo =
   | CrawlDelay Int 
   deriving (Eq, Show)
 
-getSnips :: String -> String -> [String]
-getSnips query fulltext = snips (mkRegex query) fulltext 15 
-
--- | separate helper function specifies the # words we take on either side 
---   so that we can use small parameters when testing the function.
-snips :: Regex -> String -> Int -> [String]
-snips rx s len = 
 -- | Given an absolute URL, a query, and an HTML string.
 -- return type ([List of absolute URLs in doc], [List of snippets matched])
-parseDoc :: String -> String -> String -> IO ([String], [String])
+parseDoc :: String -> String -> String -> IO ([String], String)
 parseDoc _   _     ""       = return $ ([], [])
 parseDoc url query fulltext = 
   case U.getDomain url of 
@@ -55,12 +44,11 @@ convertUrl domain s = case stripPrefix "http" (lowercase s) of
                          Just _  -> s  
 
 ignorePrefixes :: String -> Bool 
-ignorePrefixes s = 
-  case stripPrefix "mailto" (lowercase s) of 
-    Nothing -> case stripPrefix "ftp" (lowercase s) of 
-      Nothing -> True 
-      Just _  -> False 
-    Just _  -> False 
+ignorePrefixes s = not (mailto s || ftp s || js s)
+  where mailto = prefIn "mailto" 
+        ftp = prefIn "ftp" 
+        js = prefIn "javascript" 
+        prefIn x y = isPrefixOf x (lowercase y)
 
 isHttp :: String -> Bool 
 isHttp s = case stripPrefix "https" (lowercase s) of 
@@ -70,13 +58,30 @@ isHttp s = case stripPrefix "https" (lowercase s) of
 lowercase :: String -> String
 lowercase = map toLower 
 
-getSnips :: String -> String -> IO [String]
+-- | getSnips now assumes query is a space separated list of words
+getSnips :: String -> String -> IO String
 getSnips query fulltext = 
   do let doc = readString [withParseHTML yes, withWarnings no] fulltext
-     let iostr = runX $ doc >>> css "p" /> getText
+     let iostr = runX . xshow $ doc >>> (css "body")
      sl <- iostr
-     return $ concatMap (snips (mkRegex query) 15) sl
+     return $ querySuccess (orOperation (words query)) (stripTags (concat sl))
 
+stripTags :: String -> String 
+stripTags s = let rx = mkRegex "<[^>]*>" in 
+  subRegex rx s " "
+
+orOperation :: [String] -> Regex
+orOperation sl = mkRegexWithOpts (concat (intersperse "|" sl)) True False
+
+concatTexts :: [String] -> String
+concatTexts = concatMap (\x -> x ++ " ")
+
+querySuccess :: Regex -> String -> String
+querySuccess rx s = case matchRegex rx s of 
+  Nothing -> ""
+  Just _  -> s 
+
+{-
 -- | separate helper function specifies the # words we take on either side 
 --   so that we can use small parameters when testing the function.
 snips :: Regex -> Int -> String -> [String]
@@ -89,8 +94,8 @@ snips rx len s =
        let snip1 = foldl (const . drop 1) (words b) (drop n1 (words b)) in
        let (snip2, remain) = splitAt n2 (words a) in
        let snip = unwords snip1 ++ " " ++ m ++ " " ++ unwords snip2 in
-       trim snip:(snips rx (unwords remain) len)
-
+       trim snip:(snips rx len (unwords remain))
+-}
 
 trim :: String -> String
 trim w = noSp "" $ dropWhile isSpace w
