@@ -144,6 +144,8 @@ tMatchPath15 :: Test
 tMatchPath15 = matchPath "https://global.upenn.edu/isss/opt" "iss"
   ~?= False
 
+-- | tests for PageParsers.hs
+
 comment :: String
 comment = "# robots.txt for http://www.wikipedia.org/ and friends\n"
 

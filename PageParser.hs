@@ -15,6 +15,10 @@ data LineInfo =
   | CrawlDelay Int 
   deriving (Eq, Show)
 
+-- return type ([List of absolute URLs in doc], [List of snippets matched])
+parseDoc :: String -> String -> ([String], [String])
+parseDoc query fulltext = undefined
+
 getSnips :: String -> String -> [String]
 getSnips query fulltext = snips (mkRegex query) fulltext where 
   snips rx s = 

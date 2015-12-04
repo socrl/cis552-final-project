@@ -37,7 +37,3 @@ matchPath a r = maybe False f (getRelPath a) where
     validPrefix []     _        = True
     validPrefix _      _        = False
 
-
-
-
-
