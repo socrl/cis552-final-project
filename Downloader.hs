@@ -17,6 +17,7 @@ import Control.Monad.IO.Class
 import Text.HandsomeSoup
 
 import Data.HashSet
+import qualified Data.HashSet as Hashset
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -27,11 +28,25 @@ type Frontier   = Queue String
 type Visited    = HashSet String
 type ServerInfo = Map String (Robot, UTCTime)
 
+-- Status maintains four states
+-- 1. Frontier  : storing the URLs to be crawled
+-- 2. Visited   : the URLs that have been crawled
+-- 3. ServerInfo: mapping the domain to the robots information of the 
+--                domain, and last visit time
+-- 4. [Result]  : list of results, including the URL and a list of 
+--                matched snippets
 type Status = (Frontier, Visited, ServerInfo, [Result])
 
-sendReqs :: String -> String -> Int -> Either (IO [Result]) String
-sendReqs = undefined
+-- API for top level function, pass in a starting URL address,
+-- a search query and upper limit of # of pages to crawl
+sendReqs :: String -> String -> Int -> IO [Result]
+sendReqs url query lim = do 
+  (_, (_, v, s, rl)) <- runStateT (execute query 0 lim) 
+                        (single url, Hashset.empty, Map.empty, [])
+  return rl
 
+-- Main execution method, responsible for scheduling tasks, sending
+-- HTTP request, pass web content to parser and storing results 
 execute :: String -> Int -> Int -> StateT Status IO ()
 execute query ord lim | ord > lim = return ()
                       | otherwise = do 
@@ -68,7 +83,7 @@ execute query ord lim | ord > lim = return ()
             case contents >>= (Just . (getSnips query)) of
               Nothing -> do put (f', v, s, rl)
                             execute query (ord+1) lim
-              Just _ ->  undefined
+              Just _ ->  return ()
 
 
 fetchContents :: (MonadIO m) => String -> m (Maybe String)
