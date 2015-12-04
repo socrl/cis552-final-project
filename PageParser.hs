@@ -22,7 +22,7 @@ data LineInfo =
 
 -- | Given an absolute URL, a query, and an HTML string.
 -- return type ([List of absolute URLs in doc], [List of snippets matched])
-parseDoc :: String -> String -> String -> IO ([String], [String])
+parseDoc :: String -> String -> String -> IO ([String], String)
 parseDoc _   _     ""       = return $ ([], [])
 parseDoc url query fulltext = 
   case U.getDomain url of 
@@ -45,11 +45,11 @@ convertUrl domain s = case stripPrefix "http" (lowercase s) of
 
 ignorePrefixes :: String -> Bool 
 ignorePrefixes s = 
-  case stripPrefix "mailto" (lowercase s) of 
-    Nothing -> case stripPrefix "ftp" (lowercase s) of 
-      Nothing -> True 
-      Just _  -> False 
-    Just _  -> False 
+  case (mailto, ftp) of 
+    (Nothing, Nothing) -> True
+    (_, _)            -> False 
+  where mailto = stripPrefix "mailto" (lowercase s)
+        ftp = stripPrefix "ftp" (lowercase s)
 
 isHttp :: String -> Bool 
 isHttp s = case stripPrefix "https" (lowercase s) of 
@@ -59,13 +59,26 @@ isHttp s = case stripPrefix "https" (lowercase s) of
 lowercase :: String -> String
 lowercase = map toLower 
 
-getSnips :: String -> String -> IO [String]
+-- | getSnips now assumes query is a space separated list of words
+getSnips :: String -> String -> IO String
 getSnips query fulltext = 
   do let doc = readString [withParseHTML yes, withWarnings no] fulltext
-     let iostr = runX $ doc >>> css "p" /> getText
+     let iostr = runX $ doc >>> (css "h1" <+> css "h2" <+> css "p") /> getText
      sl <- iostr
-     return $ concatMap (snips (mkRegex query) 15) sl
+     return $ querySuccess (orOperation (words query)) (concatTexts sl)
 
+orOperation :: [String] -> Regex
+orOperation sl = mkRegexWithOpts (concat (intersperse "|" sl)) True False
+
+concatTexts :: [String] -> String
+concatTexts = concatMap (\x -> x ++ " ")
+
+querySuccess :: Regex -> String -> String
+querySuccess rx s = case matchRegex rx s of 
+  Nothing -> ""
+  Just _  -> s 
+
+{-
 -- | separate helper function specifies the # words we take on either side 
 --   so that we can use small parameters when testing the function.
 snips :: Regex -> Int -> String -> [String]
@@ -79,6 +92,7 @@ snips rx len s =
        let (snip2, remain) = splitAt n2 (words a) in
        let snip = unwords snip1 ++ " " ++ m ++ " " ++ unwords snip2 in
        trim snip:(snips rx len (unwords remain))
+-}
 
 trim :: String -> String
 trim w = noSp "" $ dropWhile isSpace w
