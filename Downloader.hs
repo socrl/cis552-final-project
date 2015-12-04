@@ -49,11 +49,11 @@ execute query ord lim | ord > lim = return ()
             Nothing  -> return ()
             Just con -> do currT <- liftIO getCurrentTime
                            put (f, v, Map.insert domain 
-                                ((parseRobot $ fromJust contents), currT) s, rl)
+                                ((parseRobot con), currT) s, rl)
                            execute query ord lim
         Just (robot, l_vt) -> do
           -- contain robots info
-          let pass = canCrawl robot l_vt url 
+          pass <- canCrawl robot l_vt url 
           -- cannot crawl, drop this url
           if pass < 0 then do
             put (f', v, s, rl)
@@ -64,7 +64,7 @@ execute query ord lim | ord > lim = return ()
             execute query ord lim
           -- can crawl right now
           else do
-            contents <- fectchContents url 
+            contents <- fetchContents url 
             case contents >>= (Just . (getSnips query)) of
               Nothing -> do put (f', v, s, rl)
                             execute query (ord+1) lim
@@ -83,8 +83,9 @@ canCrawl (ll, c_del) l_vt url = do
   if not $ pathAllow ll url then return (-1)
     else do
       currT <- liftIO getCurrentTime
-      if (diffUTCTime currT l_vt < c_del) then return 0
-        else return 1
+      if ((realToFrac $ diffUTCTime currT l_vt :: Double) < 
+          (fromIntegral c_del :: Double)) then return 0 
+      else return 1
 
 -- Check if the url is allowed to crawl
 pathAllow :: [LineInfo] -> String -> Bool
