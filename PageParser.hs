@@ -21,62 +21,50 @@ data LineInfo =
   deriving (Eq, Show)
 
 -- | Given an absolute URL, a query, and an HTML string.
--- return type ([list of absolute URLs in doc], text of matched body)
+--   Return: ([list of absolute URLs in doc], text of matched body)
 parseDoc :: String -> String -> String -> IO ([String], String)
 parseDoc _   _     ""       = return $ ([], [])
 parseDoc url query fulltext = 
   case U.getDomain url of 
     Nothing     -> error "Cannot retrieve valid domain"
     Just domain -> 
-      do let doc = readString [withParseHTML yes, withWarnings no] fulltext
+      do let doc   = readString [withParseHTML yes, withWarnings no] fulltext
          let iostr = runX $ doc >>> css "a" >>> getAttrValue "href"
          sl <- iostr
          sps <- getSnips query fulltext
          return ((listUrls domain sl), sps)
 
 listUrls :: String -> [String] -> [String]
-listUrls domain sl = filter isHttp (map (convertUrl domain) (filter ignorePrefixes sl)) 
+listUrls domain sl = 
+  filter isHttp (map (convertToAbsUrl domain) (filter ignorePrefixes sl)) where
+     convertToAbsUrl d s = case stripPrefix "http" (lowercase s) of 
+                             Nothing -> "http://" ++ d ++ "/" ++ s
+                             Just _  -> lowercase s  
+     isHttp s            = case stripPrefix "https" (lowercase s) of 
+                             Nothing -> True
+                             Just _  -> False
+     ignorePrefixes s    = not (mailto s || ftp s || js s) where
+       mailto     = prefIn "mailto" 
+       ftp        = prefIn "ftp" 
+       js         = prefIn "javascript" 
+       prefIn x y = isPrefixOf x (lowercase y)
+     lowercase           = map toLower 
 
--- | converts all to absolute URLs
-convertUrl :: String -> String -> String
-convertUrl domain s = case stripPrefix "http" (lowercase s) of 
-                         Nothing -> "http://" ++ domain ++ "/" ++ s
-                         Just _  -> s  
-
-ignorePrefixes :: String -> Bool 
-ignorePrefixes s = not (mailto s || ftp s || js s)
-  where mailto = prefIn "mailto" 
-        ftp = prefIn "ftp" 
-        js = prefIn "javascript" 
-        prefIn x y = isPrefixOf x (lowercase y)
-
-isHttp :: String -> Bool 
-isHttp s = case stripPrefix "https" (lowercase s) of 
-             Nothing -> True
-             Just _  -> False
-
-lowercase :: String -> String
-lowercase = map toLower 
-
--- | getSnips now assumes query is a space separated list of words
+-- | query must be a space separated list of words
 getSnips :: String -> String -> IO String
 getSnips query fulltext = 
-  do let doc = readString [withParseHTML yes, withWarnings no] fulltext
+  do let doc   = readString [withParseHTML yes, withWarnings no] fulltext
      let iostr = runX . xshow $ doc >>> (css "body")
      sl <- iostr
      return $ querySuccess (orOperation (words query)) 
-                           (stripSpaceDelims . stripTags $ concat sl)
-
-stripSpaceDelims :: String -> String 
-stripSpaceDelims s = let rx = mkRegex "\n|\r|\t" in 
-  subRegex rx s ""
-
-stripTags :: String -> String 
-stripTags s = let rx = mkRegex "<[^>]*>" in 
-  subRegex rx s " "
+                           (stripSpaceDelims . stripTags $ concat sl) where
+  stripSpaceDelims          = subCustomRegex "\n|\r|\t" "" 
+  stripTags                 = subCustomRegex "<[^>]*>" " "
+  subCustomRegex expr sub s = let rx = mkRegex expr in
+    subRegex rx s sub
 
 orOperation :: [String] -> Regex
-orOperation sl = mkRegexWithOpts (concat (intersperse "|" sl)) True False
+orOperation sl = mkRegexWithOpts (concat $ intersperse "|" sl) True False
 
 concatTexts :: [String] -> String
 concatTexts = concatMap (\x -> x ++ " ")
@@ -85,6 +73,16 @@ querySuccess :: Regex -> String -> String
 querySuccess rx s = case matchRegex rx s of 
   Nothing -> ""
   Just _  -> s 
+
+trim :: String -> String
+trim w = noSp "" $ dropWhile isSpace w
+
+noSp :: String -> String -> String
+noSp _ ""             = ""
+noSp m (x:xs)
+    | isSpace x       = noSp (x:m) xs
+    | null m          = x:noSp "" xs
+    | otherwise       = reverse m ++ x:noSp "" xs
 
 {-
 -- | separate helper function specifies the # words we take on either side 
@@ -102,15 +100,7 @@ snips rx len s =
        trim snip:(snips rx len (unwords remain))
 -}
 
-trim :: String -> String
-trim w = noSp "" $ dropWhile isSpace w
-
-noSp :: String -> String -> String
-noSp _ "" = ""
-noSp m (x:xs)
-    | isSpace x       = noSp (x:m) xs
-    | null m          = x:noSp "" xs
-    | otherwise       = reverse m ++ x:noSp "" xs
+-- | PARSE ROBOTS.TXT 
 
 parseRobot :: String -> Robot
 parseRobot s  = 
@@ -151,7 +141,6 @@ notOurUserAgentP = do _ <- multiCommentP
                       _ <- lineInfoP
                       return []
 
-
 lineInfoP :: P.Parser [LineInfo]
 lineInfoP = many (allowUrlP <|> disallowUrlP <|> crawlDelayP <|> commentP)
 
@@ -172,7 +161,6 @@ crawlDelayP = do _ <- wsP $ P.string "Crawl-delay:"
                  n <- P.int 
                  _ <- wsP $ untilEOL
                  return $ CrawlDelay n 
-
 
 isUserAgent :: P.Parser String 
 isUserAgent = P.string "User-agent:" <|> P.string "User-Agent:"

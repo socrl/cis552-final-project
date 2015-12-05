@@ -114,6 +114,24 @@ tMatchPath7 = matchPath "https://global.upenn.edu/isss/opt" "/isss/opt"
 
 -- tests for PageParsers.hs
 
+tListUrls :: Test 
+tListUrls = P.listUrls "google.com" ["relpath.txt", 
+                                     "www.stillarelpath.com", 
+                                     "http://validsite.com", 
+                                     "https://ignoreme.com", 
+                                     "javascript:void(0)",
+                                     "ftp://noparse",
+                                     "HTTP://HI.com",
+                                     "mailto:kchen2013@gmail.com"] 
+                     ~?= ["http://google.com/relpath.txt",
+                          "http://google.com/www.stillarelpath.com",
+                          "http://validsite.com",
+                          "http://hi.com"]
+
+
+
+-- | test strings for the robots.txt parser
+
 comment :: String
 comment = "# robots.txt for http://www.wikipedia.org/ and friends\n"
 
