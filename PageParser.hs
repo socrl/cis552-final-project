@@ -21,7 +21,7 @@ data LineInfo =
   deriving (Eq, Show)
 
 -- | Given an absolute URL, a query, and an HTML string.
--- return type ([List of absolute URLs in doc], [List of snippets matched])
+-- return type ([list of absolute URLs in doc], text of matched body)
 parseDoc :: String -> String -> String -> IO ([String], String)
 parseDoc _   _     ""       = return $ ([], [])
 parseDoc url query fulltext = 
@@ -64,7 +64,12 @@ getSnips query fulltext =
   do let doc = readString [withParseHTML yes, withWarnings no] fulltext
      let iostr = runX . xshow $ doc >>> (css "body")
      sl <- iostr
-     return $ querySuccess (orOperation (words query)) (stripTags (concat sl))
+     return $ querySuccess (orOperation (words query)) 
+                           (stripSpaceDelims . stripTags $ concat sl)
+
+stripSpaceDelims :: String -> String 
+stripSpaceDelims s = let rx = mkRegex "\n|\r|\t" in 
+  subRegex rx s ""
 
 stripTags :: String -> String 
 stripTags s = let rx = mkRegex "<[^>]*>" in 
