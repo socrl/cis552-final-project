@@ -2,16 +2,18 @@
 module Tests where
 
 import Test.HUnit
-import UrlUtils
 
 import Test.HUnit (runTestTT,Test(..),Assertion, (~?=), (~:), assert)
 import Test.QuickCheck (Arbitrary(..), Testable(..), Gen, elements, 
   oneof, frequency, sized, quickCheckWith, stdArgs, maxSize, maxSuccess)
 
+import UrlUtils
 import qualified PageParser as P
 import qualified Parser as P
 import qualified ParserCombinators as P
-
+import PostProcessor
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 -- | Tests for UrlUtils.hs
 
@@ -247,6 +249,43 @@ tParseRobotsTxt = "parser for the robots.txt" ~: TestList [
                              P.Disallow "/search",   P.Allow "/search/about",
                              P.Disallow "/sdch"]] ]
 
+-- | tests for PostProcessor.hs
+tTrimNonAlpha1 :: Test
+tTrimNonAlpha1 = trimNonAlpha "" ~?= ""
+
+tTrimNonAlpha2 :: Test
+tTrimNonAlpha2 = trimNonAlpha "abc" ~?= "abc"
+
+tTrimNonAlpha3 :: Test
+tTrimNonAlpha3 = trimNonAlpha "ab .c" ~?= "ab .c"
+
+tTrimNonAlpha4 :: Test
+tTrimNonAlpha4 = trimNonAlpha ".,//(* )ab .c. .   " ~?= "ab .c"
+
+str1 :: String
+str1 = "Huang Weikai assembles footage from a dozen amateur videographers and weaves them into a unique symphony of urban social dysfunction."
+
+key1 :: [String]
+key1 = ["assembles", "UrBaN", "huang", "duck", "dysfunction", "a"]
+
+map1 :: Map String [Int]
+map1 = Map.fromList [("huang", [0]), ("assembles", [2]), ("urban", [17]), ("a", [5, 13]), ("dysfunction", [19])]
+
+str2 :: String
+str2 = "Festen is best known for being the first Dogme 95 film (its full title in Denmark is Dogme #1 – Festen). Dogme films are governed by a manifesto that insists on specific production and narrative limitations (such as banning any post-production sound editing), in part as a protest against the expensive Hollywood-style film-making. The film was shot on a Sony DCR-PC3 Handycam on standard Mini-DV cassettes."
+
+key2 :: [String]
+key2 = ["FESTEN", "dogme", "95", "facebook", "FESTEN", "festen", "feStEN"]
+
+map2 :: Map String [Int]
+map2 = Map.fromList [("festen", [0, 19]), ("dogme", [8, 17, 20]), ("95", [9])]
+
+tFindWords1 :: Test
+tFindWords1 = findWords str1 key1 ~?= map1
+
+tFindWords2 :: Test
+tFindWords2 = findWords str2 key2 ~?= map2
+
 main :: IO ()
 main = do
   _ <- runTestTT $ TestList [tDom1, tDom2, tDom3, tDom4, tDom5, tDom6, tDom7,
@@ -261,6 +300,8 @@ main = do
                              tCheckProt1, tCheckProt2, tCheckProt3, tCheckProt4,
                              tCheckProt5, tParseComment, tParseMultiComment,
                              tParseNotOurUserAgent, tParseTgtUserAgent,
-                             tParseRobotsTxt]
+                             tParseRobotsTxt, tTrimNonAlpha1, tTrimNonAlpha2,
+                             tTrimNonAlpha3, tTrimNonAlpha4, tFindWords1,
+                             tFindWords2]
   return ()
 
