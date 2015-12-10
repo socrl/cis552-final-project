@@ -12,6 +12,8 @@ import qualified PageParser as P
 import qualified Parser as P
 import qualified ParserCombinators as P
 
+import Downloader
+
 
 -- | Tests for UrlUtils.hs
 
@@ -193,6 +195,22 @@ tParseRobotsTxt = "parser for the robots.txt" ~: TestList [
                        [P.CrawlDelay 10,         
                              P.Disallow "/search",   P.Allow "/search/about",
                              P.Disallow "/sdch"]] ]
+
+-- tests for Downloader.hs
+
+tTypeAllow1 :: Test
+tTypeAllow1 = typeAllow "http://www.cis.upenn.edu/index.php" ~?= True
+
+tTypeAllow2 :: Test
+tTypeAllow2 = typeAllow "http://www.dcs.bbk.ac.uk/~mark/" ~?= True
+
+tTypeAllow3 :: Test
+tTypeAllow3 = typeAllow "http://www.dcs.bbk.ac.uk/~martin/sewn/ls3/testpage.html" ~?= True
+
+tTypeAllow4 :: Test
+tTypeAllow4 = typeAllow "http://www.dcs.bbk.ac.uk/~martin/sewn/ls3/images/GoodGoing-YouGotTheLink.jpg" ~?= False
+
+
 
 main :: IO ()
 main = do
