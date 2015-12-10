@@ -281,10 +281,38 @@ map2 :: Map String [Int]
 map2 = Map.fromList [("festen", [0, 19]), ("dogme", [8, 17, 20]), ("95", [9])]
 
 tFindWords1 :: Test
-tFindWords1 = findWords str1 key1 ~?= map1
+tFindWords1 = findWords (txtFormat str1) (keyFormat key1) ~?= map1
 
 tFindWords2 :: Test
-tFindWords2 = findWords str2 key2 ~?= map2
+tFindWords2 = findWords (txtFormat str2) (keyFormat key2) ~?= map2
+
+tNumOccur1 :: Test
+tNumOccur1 = numOccur map1 ~?= 6
+
+tNumOccur2 :: Test
+tNumOccur2 = numOccur map2 ~?= 6
+
+tNumDistinct1 :: Test
+tNumDistinct1 = numDistinct map1 ~?= 5
+
+tNumDistinct2 :: Test
+tNumDistinct2 = numDistinct map2 ~?= 3
+
+tAvgDist1 :: Test
+tAvgDist1 = avgDist map1 ~?= 3
+
+tAvgDist2 :: Test
+tAvgDist2 = avgDist map2 ~?= 3
+
+tGetPgValue1 :: Test
+tGetPgValue1 = getPgValue (keyFormat key1) ("URL1", str1) ~?= ("URL1", str1, 10)
+
+tGetPgValue2 :: Test
+tGetPgValue2 = getPgValue (keyFormat key2) ("URL2", str2) ~?= ("URL2", str2, 6)
+
+tRankPages1 :: Test
+tRankPages1 = rankPages [("URL1", str1), ("URL2", str2)] ["URbAn"] ~?=
+  [("URL1", str1, 1), ("URL2", str2, 0)]
 
 main :: IO ()
 main = do
@@ -302,6 +330,8 @@ main = do
                              tParseNotOurUserAgent, tParseTgtUserAgent,
                              tParseRobotsTxt, tTrimNonAlpha1, tTrimNonAlpha2,
                              tTrimNonAlpha3, tTrimNonAlpha4, tFindWords1,
-                             tFindWords2]
+                             tFindWords2, tNumOccur1, tNumOccur2, tNumDistinct1,
+                             tNumDistinct2, tAvgDist1, tAvgDist2, tGetPgValue1,
+                             tGetPgValue2, tRankPages1]
   return ()
 

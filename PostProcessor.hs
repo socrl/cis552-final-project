@@ -41,7 +41,7 @@ getPgValue :: [String] -> (String, String) -> (String, String, Int)
 getPgValue keys (url, txt) = (url, txt, val) where
   m = findWords (txtFormat txt) keys
   val = (numOccur m) * (numDistinct m) `div` if avgD > 0 then avgD else 1
-  avgD = avgDist m keys
+  avgD = avgDist m
 
 -- | given a map of occurrences, determine the number of times any keyword
 -- occurred
@@ -53,19 +53,13 @@ numOccur m = foldr (\ x accu -> length x + accu) 0 (Map.elems m)
 numDistinct :: Map String [Int] -> Int
 numDistinct = length . Map.keys
 
--- | given a map of occurrences, determine the average distance between
--- occurrences of keywords, ignoring the bodies of the keywords themselves
-avgDist :: Map String [Int] -> [String] -> Int
-avgDist m keys = undefined
-
-
-
-
-
-
-
-
-
+-- | given a map of occurrences, determine the average number of words between
+-- occurrences of keywords
+avgDist :: Map String [Int] -> Int
+avgDist m = if x > 0 then (f $ sort $ concat $ Map.elems m) `div` x else 0 where
+  f (a:s@(b:_)) = b - a + (f s)
+  f _           = 0
+  x = numOccur m
 
 -- | formatting the text from the webpage: split text on whitespace, trim
 -- non-alphanumeric characters, convert to lowercase, remove empty strings
