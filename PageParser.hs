@@ -31,33 +31,37 @@ parseDoc url query fulltext =
       do let doc   = readString [withParseHTML yes, withWarnings no] fulltext
          let iostr = runX $ doc >>> css "a" >>> getAttrValue "href"
          sl <- iostr
-         sps <- getSnips query fulltext
-         return ((listUrls domain sl), sps)
+         sps <- retPageContents query fulltext
+         return ((listUrls domain sl), trim sps)
 
 listUrls :: String -> [String] -> [String]
 listUrls domain sl = 
   filter isHttp (map (convertToAbsUrl domain) (filter ignorePrefixes sl)) where
-     convertToAbsUrl d s = case stripPrefix "http" (lowercase s) of 
-                             Nothing -> "http://" ++ d ++ "/" ++ s
-                             Just _  -> lowercase s  
-     isHttp s            = case stripPrefix "https" (lowercase s) of 
-                             Nothing -> True
-                             Just _  -> False
-     ignorePrefixes s    = not (mailto s || ftp s || js s) where
-       mailto     = prefIn "mailto" 
-       ftp        = prefIn "ftp" 
-       js         = prefIn "javascript" 
-       prefIn x y = isPrefixOf x (lowercase y)
-     lowercase           = map toLower 
+    -- | helpers upon helpers
+    convertToAbsUrl d s = case stripPrefix "http" (lowercase s) of 
+                            Nothing -> "http://" ++ d ++ "/" ++ s
+                            Just _  -> lowercase s  
+    isHttp s            = case stripPrefix "https" (lowercase s) of 
+                            Nothing -> True
+                            Just _  -> False
+    ignorePrefixes s    = not (mailto s || ftp s || js s) where
+      mailto     = prefIn "mailto" 
+      ftp        = prefIn "ftp" 
+      js         = prefIn "javascript" 
+      prefIn x y = isPrefixOf x (lowercase y)
+     
+lowercase :: String -> String 
+lowercase = map toLower 
 
 -- | query must be a space separated list of words
-getSnips :: String -> String -> IO String
-getSnips query fulltext = 
+retPageContents :: String -> String -> IO String
+retPageContents query fulltext = 
   do let doc   = readString [withParseHTML yes, withWarnings no] fulltext
      let iostr = runX . xshow $ doc >>> (css "body")
      sl <- iostr
-     return $ querySuccess (orOperation (words query)) 
+     return $ querySuccess (orOperation (words $ lowercase query)) 
                            (stripSpaceDelims . stripTags $ concat sl) where
+  -- | helpers
   stripSpaceDelims          = subCustomRegex "\n|\r|\t" "" 
   stripTags                 = subCustomRegex "<[^>]*>" " "
   subCustomRegex expr sub s = let rx = mkRegex expr in
@@ -70,7 +74,7 @@ concatTexts :: [String] -> String
 concatTexts = concatMap (\x -> x ++ " ")
 
 querySuccess :: Regex -> String -> String
-querySuccess rx s = case matchRegex rx s of 
+querySuccess rx s = case matchRegex rx (lowercase s) of 
   Nothing -> ""
   Just _  -> s 
 
