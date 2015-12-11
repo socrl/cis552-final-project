@@ -3,9 +3,7 @@ module Main where
 
 import Text.Read
 import Downloader (Result, sendReqs)
-
-startCrawl :: String -> String -> Int -> Either [Result] String
-startCrawl = undefined
+import PostProcessor
 
 {-
 1. tell CL to get starting URL, search string, num pages to crawl from user
@@ -36,12 +34,23 @@ getIntParam s = do
     Just i -> return i
     Nothing -> getIntParam "You provided a non-integer input. Try again."
 
+formatOutput :: [(String, String, Double, String)] -> IO ()
+formatOutput ((pg, _, _, snip):xs) = do
+  putStrLn $ "***** " ++ pg ++ " *****"
+  putStrLn snip
+  putStrLn ""
+  formatOutput xs
+formatOutput [] = do
+  putStrLn ""
+
 main :: IO ()
 main = do
   url <- getStParam "Provide a starting URL."
-  str <- getStParam "Provide a string you want to search for."
+  str <-
+    getStParam "Provide whitespace-delimited keywords you want to search for."
   num <- getIntParam "Provide the maximum number of pages to crawl."
+  putStrLn "Crawling..."
   (rs, i) <- sendReqs url str num
-  putStrLn $ show rs
-  putStrLn $ show i
+  putStrLn $ "Crawled " ++ show i ++ " pages."
+  formatOutput $ rankPages rs (txtFormat str)
   return ()
