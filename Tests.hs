@@ -11,6 +11,8 @@ import PageParser
 import ParserCombinators
 import Text.Regex
 
+import Downloader
+
 -- | Tests for UrlUtils.hs
 
 tDom1 :: Test
@@ -64,7 +66,7 @@ tRelPath7 :: Test
 tRelPath7 = getRelPath "" ~?= Just ""
 
 tType1 :: Test
-tType1 = getType "https://global.upenn.edu/isss/opt#tutorial" ~?= Nothing
+tType1 = getType "https://global.upenn.edu/isss/opt#tutorial" ~?= Just "html"
 
 tType2 :: Test
 tType2 = getType "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Eraserhead.jpg/800px-Eraserhead.jpg"
@@ -78,10 +80,10 @@ tType4 :: Test
 tType4 = getType "package/base-4.8.1.0/docs/Data-List.html" ~?= Just "html"
 
 tType5 :: Test
-tType5 = getType "https://www.google.com" ~?= Nothing
+tType5 = getType "https://www.google.com" ~?= Just "html"
 
 tType6 :: Test
-tType6 = getType "https://global.upenn.edu/isss/opt" ~?= Nothing
+tType6 = getType "https://global.upenn.edu/isss/opt" ~?= Just "html"
 
 tMatchPath1 :: Test
 tMatchPath1 = matchPath "https://hackage.haskell.org/package/base-4.8.1.0/docs/Data-List.html" "package/base-4.8.1.0/docs/Data-List.html"
@@ -279,6 +281,22 @@ tParseRobotsTxt = "parser for the robots.txt" ~: TestList [
                        [CrawlDelay 10,         
                              Disallow "/search",   Allow "/search/about",
                              Disallow "/sdch"]] ]
+
+-- tests for Downloader.hs
+
+tTypeAllow1 :: Test
+tTypeAllow1 = typeAllow "http://www.cis.upenn.edu/index.php" ~?= True
+
+tTypeAllow2 :: Test
+tTypeAllow2 = typeAllow "http://www.dcs.bbk.ac.uk/~mark/" ~?= True
+
+tTypeAllow3 :: Test
+tTypeAllow3 = typeAllow "http://www.dcs.bbk.ac.uk/~martin/sewn/ls3/testpage.html" ~?= True
+
+tTypeAllow4 :: Test
+tTypeAllow4 = typeAllow "http://www.dcs.bbk.ac.uk/~martin/sewn/ls3/images/GoodGoing-YouGotTheLink.jpg" ~?= False
+
+
 
 main :: IO ()
 main = do
