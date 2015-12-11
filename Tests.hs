@@ -4,15 +4,12 @@ module Tests where
 import Test.HUnit
 import UrlUtils
 
-import Test.HUnit (runTestTT,Test(..),Assertion, (~?=), (~:), assert)
 import Test.QuickCheck (Arbitrary(..), Testable(..), Gen, elements, 
   oneof, frequency, sized, quickCheckWith, stdArgs, maxSize, maxSuccess)
 
-import System.IO  
-import Control.Monad
 import PageParser 
-import Parser
 import ParserCombinators
+import Text.Regex
 
 -- | Tests for UrlUtils.hs
 
@@ -114,6 +111,11 @@ tMatchPath7 = matchPath "https://global.upenn.edu/isss/opt" "/isss/opt"
   ~?= True
 
 -- tests for PageParsers.hs
+tParseWebpageFns :: Test
+tParseWebpageFns = TestList 
+  [tParseDocFail, tParseDocFail, tListUrls, tRetPageContents,
+   tQuerySuccess, tOrOperation, tLowercase, tTrim, tRmTrail]
+
 validUrlsForParseDoc :: [String]
 validUrlsForParseDoc = ["http://en.wikipedia.org/wiki/alan_turing","http://www.claymath.org/millennium-problems/p-vs-np-problem/","http://www.cis.upenn.edu/~alur/","http://www.automatatutor.com/","http://www.cis.upenn.edu/~alur/"]
 
@@ -122,6 +124,12 @@ testHTML = "<html>\n<head><title>CIS 262: Automata., Computability, and Complexi
 
 outputStringForParseDoc :: String
 outputStringForParseDoc = "CIS 262: Automata, Computability, and Complexity Fall 2015, University of Pennsylvania     Introduction  This course offers an introduction to the  science   behind computing bystudying computation abstractly without worrying about specifics of programminglanguages and/or computing platforms.In particular, we will study(a) finite automata that capture what can be computed using constantmemory, and define the class of regular languages useful for pattern matchinglanguages;(b) the universal computational model of   Turing  machines, and the inherentlimits of what can be solved on a computer (undecidability), and(c) the notion of computational tractability (which problemscan be solved in polynomial-time), and  the million-dollar P vs NP question. The course also emphasizes rigorous thinking and mathematical proofs.   Logistics    Class: Tues and Thurs 12--1.20, Towne 100, Heilmeier Hall  Instructor:  Rajeev Alur ( alur@cis ), Office hour: Wed 4-5, Levine 609  Teaching Assistants:    Jie Chen ( chenjr@seas ); Office hour: Tues 8-9, Moore 100C   Lucas Dagostino ( lucasdag@seas ); Office hour: Mon 7-8, Towne 305   Jungi Kim ( jungikim@sas ); Office hour: Tues 7.30-8.30, Towne 307   Derick Olson ( dericko@sas ); Office hour: Wed 5-6, Moore 100C   Omar Paladines ( omarp@sas ); Office hour: Mon 11-12, Moore 100B   Alex Piatski ( alpi@seas ); Office hour: Mon 6-7 and Tues 5-6, both in Moore 100C   Kelly Tan ( kellytan@seas ); Office hour: Wed 12-1, Towne 315    Recitation: Monday 4.30 -- 5.30, DRLB A1  Pre-requisites: CIS 160          Textbooks             Required: Introduction to the theory of computation, MichaelSipser, Third Edition, 2012, or Second Edition, 2006.         Additional reference: Introduction to Automata Theory, Languagesand Computation, J.E. Hopcroft, R. Motwani, and J.D. Ullman, Addison Wesley, Third edition, 2006.      Grading  Grades will be based on    Weekly Homework Assignments:  10 total, 10 pts each        Two Midterms:  50 pts each        Final Exam: 100 pts        Schedule      Aug 27: Course logistics, Discussion of course content, Introduction to    automata  Sept 1, 3, 8, 10, 15, 17, 22, 24: Finite  automata and regular languages (Chapter 1)    Oct 1: Midterm 1 (in class)   Oct 6, 13, 15, 20, 22, 27, 29; Nov 3: Turing machines and undecidability (Chapters 3, 4, 5)     Nov 5: Midterm 2  (in class)    Nov 10, 17, 19, 24; Dec 1, 3, 8:  Complexity classes and NP-completeness (Chapters 7 and 8)    Dec 18, 12 - 2: Final Exam         Notes       We will use  Piazza  for discussions.Homeworks, lecture slides, and handouts will also be posted on Piazza.   Grades are posted on  canvas .   For a few problems, we will use the tool  AutomataTutor .Sign up for an account on AutomataTutor, make sure that name and email on this account matches your Penn account.  During the class, use of mobile devices and laptops is prohibited.   Recitation: During Monday's recitation, we will mainly focus on solvingproblems. Many students find the homeworks difficult, and even when they havesolved the problem, some find it difficult to write the answer concisely andrigorously. Recitation should help with these challenges. However, attendancefor recitation is optional as no new material will be covered.  Homework Drop-off and Pick-up: On the day the homework is due, it should besubmitted before the lecture starts.Graded exams and homeworks can be collected from Laura Fox in Levine 308( lffox@seas ) during Mon--Fri, 9--12 and 2--4pm.  Plagiarism Policy: For homeworks, you can use your class notes, the textbook, and the reference book, but not old solutions, friends, other books, or any other material from the web. For violations of this rule, you will be reported to the Office of  Student Conduct at Penn.Start working on homework problems early, and if you get stuck, contact one ofus; we will be happy to help you progress.  Open book exams: Both midterms and final exam will be open book: during the exam, you can consultthe textbook, your class notes, and handouts distributed during the course, but are not allowed toaccess the internet.          Maintained by Rajeev Alur"
+
+helloRegex :: Regex
+helloRegex = mkRegex "hello"
+
+orRegex :: Regex
+orRegex = mkRegex "hello|hey|hi"
 
 tParseDocFail :: Test
 tParseDocFail = TestCase $ 
@@ -141,21 +149,56 @@ tParseDocSuccess = TestCase $
 
 tListUrls :: Test 
 tListUrls = listUrls "google.com" ["relpath.txt", 
-                                     "www.stillarelpath.com", 
-                                     "http://validsite.com", 
-                                     "https://ignoreme.com", 
-                                     "javascript:void(0)",
-                                     "ftp://noparse",
-                                     "HTTP://HI.com",
-                                     "mailto:kchen2013@gmail.com"] 
+                                   "www.stillarelpath.com", 
+                                   "http://validsite.com", 
+                                   "https://ignoreme.com", 
+                                   "javascript:void(0)",
+                                   "ftp://noparse",
+                                   "HTTP://HI.com",
+                                   "mailto:kchen2013@gmail.com"] 
                      ~?= ["http://google.com/relpath.txt",
                           "http://google.com/www.stillarelpath.com",
                           "http://validsite.com",
                           "http://hi.com"]
 
+tRetPageContents :: Test
+tRetPageContents = TestCase $ 
+  do out <- retPageContents "fluorescent orange computability "
+                            testHTML
+     assertEqual "check if any of these words are in page" 
+        out ("    " ++ outputStringForParseDoc ++ "  ")
 
+tQuerySuccess :: Test 
+tQuerySuccess = "check if regex is found in the string" ~:
+  TestList [ querySuccess helloRegex "How is it going?" ~?= "",
+             querySuccess helloRegex "hello!"           ~?= "hello!",
+             querySuccess orRegex    "laheyyyyyy!"      ~?= "laheyyyyyy!",
+             querySuccess orRegex    "appleHElLo!"      ~?= "appleHElLo!",
+             querySuccess helloRegex "nothing here"     ~?= ""]
+
+tOrOperation :: Test 
+tOrOperation = querySuccess (orOperation ["hello", "hey", "hi"]) "oh hey!" ~?=
+               querySuccess orRegex                              "oh hey!"
+
+tLowercase :: Test
+tLowercase = lowercase "HI how 1234 ArE you" ~?= "hi how 1234 are you"
+
+tTrim :: Test 
+tTrim = "trim test cases" ~: 
+  TestList [trim ""  ~?= "", 
+            trim "  hi   do   "  ~?= "hi   do"]
+
+tRmTrail :: Test 
+tRmTrail = "remove trailing spaces" ~:
+  TestList [rmTrail "" ""                 ~?= "", 
+            rmTrail "" "   hi   do   "    ~?= "   hi   do",
+            rmTrail "IH" "   hi   do   "  ~?= "HI   hi   do"]
 
 -- | test strings for the robots.txt parser
+tRobotsTxtFns :: Test
+tRobotsTxtFns = TestList 
+  [tParseComment, tParseMultiComment, tParseNotOurUserAgent, 
+   tParseTgtUserAgent, tParseRobotsTxt]
 
 comment :: String
 comment = "# robots.txt for http://www.wikipedia.org/ and friends\n"
@@ -245,5 +288,7 @@ main = do
                              tType3, tType4, tType5, tType6, tMatchPath1,
                              tMatchPath2, tMatchPath3, tMatchPath4, tMatchPath5,
                              tMatchPath6, tMatchPath7]
+  _ <- runTestTT tParseWebpageFns
+  _ <- runTestTT tRobotsTxtFns
   return ()
 
