@@ -18,7 +18,10 @@ getRelPath s = if null s then Nothing else importURL s >>= Just . url_path
 
 -- | given URL, get the type of document .type at the end
 getType :: String -> Maybe String
-getType s = getRelPath s >>= parseType
+getType s = getRelPath s >>=
+  \ x -> case parseType x of
+        Nothing -> Just "html"
+        a@(Just _) -> a
 
 -- | given relative URL, get the type of the document
 parseType :: String -> Maybe String
