@@ -6,6 +6,7 @@ import Test.HUnit
 import Test.HUnit (runTestTT,Test(..),Assertion, (~?=), (~:), assert)
 import Test.QuickCheck (Arbitrary(..), Testable(..), Gen, elements, 
   oneof, frequency, sized, quickCheckWith, stdArgs, maxSize, maxSuccess)
+import Control.Monad (unless)
 
 import UrlUtils
 import qualified PageParser as P
@@ -272,10 +273,10 @@ map1 :: Map String [Int]
 map1 = Map.fromList [("huang", [0]), ("assembles", [2]), ("urban", [17]), ("a", [5, 13]), ("dysfunction", [19])]
 
 str2 :: String
-str2 = "Festen is best known for being the first Dogme 95 film (its full title in Denmark is Dogme #1 – Festen). Dogme films are governed by a manifesto that insists on specific production and narrative limitations (such as banning any post-production sound editing), in part as a protest against the expensive Hollywood-style film-making. The film was shot on a Sony DCR-PC3 Handycam on standard Mini-DV cassettes."
+str2 = "Festen is best known for being the first Dogme 95 film (its full title in Denmark is Dogme #1 - Festen). Dogme films are governed by a manifesto that insists on specific production and narrative limitations (such as banning any post-production sound editing), in part as a protest against the expensive Hollywood-style film-making. The film was shot on a Sony DCR-PC3 Handycam on standard Mini-DV cassettes."
 
 key2 :: [String]
-key2 = ["FESTEN", "dogme", "95", "facebook", "FESTEN", "festen", "feStEN"]
+key2 = ["FESTEN", "dogme", "95", "facebook"]
 
 map2 :: Map String [Int]
 map2 = Map.fromList [("festen", [0, 19]), ("dogme", [8, 17, 20]), ("95", [9])]
@@ -298,21 +299,36 @@ tNumDistinct1 = numDistinct map1 ~?= 5
 tNumDistinct2 :: Test
 tNumDistinct2 = numDistinct map2 ~?= 3
 
+-- | check for equality of doubles (from StackOverflow)
+assertEquals :: String -> Double -> Double -> Double -> Assertion
+assertEquals preface delta expected actual =
+  unless (abs (expected - actual) < delta) (assertFailure msg)
+  where
+    msg = (if null preface then "" else preface ++ "\n") ++ "expected: " ++
+      show expected ++ "\n but got: " ++ show actual
+
+delt :: Double
+delt = 0.001
+
 tAvgDist1 :: Test
-tAvgDist1 = avgDist map1 ~?= 3
+tAvgDist1 = TestCase $ assertEquals "" delt 10.6 (avgDist map1)
 
 tAvgDist2 :: Test
-tAvgDist2 = avgDist map2 ~?= 3
+tAvgDist2 = TestCase $ assertEquals "" delt 4 (avgDist map2)
 
 tGetPgValue1 :: Test
-tGetPgValue1 = getPgValue (keyFormat key1) ("URL1", str1) ~?= ("URL1", str1, 10)
+tGetPgValue1 = TestCase $ assertEquals "" delt 2.3658 x where
+  x = f $ getPgValue (keyFormat key1) ("URL1", str1)
+  f (_, _, y, _) = y
 
 tGetPgValue2 :: Test
-tGetPgValue2 = getPgValue (keyFormat key2) ("URL2", str2) ~?= ("URL2", str2, 6)
+tGetPgValue2 = TestCase $ assertEquals "" delt 184.7949 x where
+  x = f $ getPgValue (keyFormat key2) ("URL2", str2)
+  f (_, _, y, _) = y
 
 tRankPages1 :: Test
 tRankPages1 = rankPages [("URL1", str1), ("URL2", str2)] ["URbAn"] ~?=
-  [("URL1", str1, 1), ("URL2", str2, 0)]
+  [("URL1", str1, 2.075, "huang weikai assembles footage from a dozen amateur videographers and weaves them into a unique symphony of urban"), ("URL2", str2, 0, "")]
 
 main :: IO ()
 main = do
