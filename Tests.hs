@@ -171,6 +171,17 @@ tCheckProt5 :: Test
 tCheckProt5 = checkProt ""
   ~?= Nothing
 
+tUrlTests :: Test
+tUrlTests = TestList
+            [tDom1, tDom2, tDom3, tDom4, tDom5, tDom6, tDom7, tDom8, tRelPath1,
+             tRelPath2, tRelPath3, tRelPath4, tRelPath5, tRelPath6, tRelPath7,
+             tType1, tType2, tType3, tType4, tType5, tType6, tMatchPath1,
+             tMatchPath2, tMatchPath3, tMatchPath4, tMatchPath5, tMatchPath6,
+             tMatchPath7, tMatchPath8, tMatchPath9, tMatchPath10, tMatchPath11,
+             tMatchPath12, tMatchPath13, tMatchPath14, tMatchPath15,
+             tMatchPath16, tMatchPath17, tMatchPath18, tCheckProt1, tCheckProt2,
+             tCheckProt3, tCheckProt4, tCheckProt5]
+
 -- tests for PageParsers.hs
 tParseWebpageFns :: Test
 tParseWebpageFns = TestList 
@@ -424,6 +435,13 @@ tRankPages1 :: Test
 tRankPages1 = rankPages [("URL1", str1), ("URL2", str2)] ["URbAn"] ~?=
   [("URL1", str1, 2.075, "huang weikai assembles footage from a dozen amateur videographers and weaves them into a unique symphony of urban"), ("URL2", str2, 0, "")]
 
+tPostProcTests :: Test
+tPostProcTests = TestList
+                 [tTrimNonAlpha1, tTrimNonAlpha2, tTrimNonAlpha3,
+                  tTrimNonAlpha4, tFindWords1, tFindWords2, tNumOccur1,
+                  tNumOccur2, tNumDistinct1, tNumDistinct2, tAvgDist1,
+                  tAvgDist2, tGetPgValue1, tGetPgValue2, tRankPages1]
+
 -- tests for Downloader.hs
 
 tTypeAllow1 :: Test
@@ -453,28 +471,10 @@ tPathAllow3 = pathAllow robotInfo1 "http://www.test.com/something/else.html" ~?=
 tPathAllow4 :: Test
 tPathAllow4 = pathAllow robotInfo1 "http://www.test.com/search/other/index.php" ~?= False
 
-
-tDownloaderTests :: [Test]
-tDownloaderTests = [tTypeAllow1, tTypeAllow2, tTypeAllow3, tTypeAllow4,
+tDownloaderTests :: Test
+tDownloaderTests = TestList
+                   [tTypeAllow1, tTypeAllow2, tTypeAllow3, tTypeAllow4,
                     tPathAllow1, tPathAllow2, tPathAllow3, tPathAllow4]
-
-tUrlTests :: Test
-tUrlTests = TestList
-            [tDom1, tDom2, tDom3, tDom4, tDom5, tDom6, tDom7, tDom8, tRelPath1,
-             tRelPath2, tRelPath3, tRelPath4, tRelPath5, tRelPath6, tRelPath7,
-             tType1, tType2, tType3, tType4, tType5, tType6, tMatchPath1,
-             tMatchPath2, tMatchPath3, tMatchPath4, tMatchPath5, tMatchPath6,
-             tMatchPath7, tMatchPath8, tMatchPath9, tMatchPath10, tMatchPath11,
-             tMatchPath12, tMatchPath13, tMatchPath14, tMatchPath15,
-             tMatchPath16, tMatchPath17, tMatchPath18, tCheckProt1, tCheckProt2,
-             tCheckProt3, tCheckProt4, tCheckProt5]
-
-tPostProcTests :: Test
-tPostProcTests = TestList
-                 [tTrimNonAlpha1, tTrimNonAlpha2, tTrimNonAlpha3,
-                  tTrimNonAlpha4, tFindWords1, tFindWords2, tNumOccur1,
-                  tNumOccur2, tNumDistinct1, tNumDistinct2, tAvgDist1,
-                  tAvgDist2, tGetPgValue1, tGetPgValue2, tRankPages1]
 
 main :: IO ()
 main = do
