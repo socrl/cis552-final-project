@@ -11,7 +11,7 @@ import Text.HandsomeSoup
 import qualified UrlUtils as U
 import Data.List
 
--- | PARSE WEBPAGE HTML 
+-- | PARSE WEBPAGE HTML
 
 -- | Given: an absolute URL, a space-separated list of words to search for,
 --         and a string of the HTML webpage.
@@ -38,19 +38,19 @@ listUrls domain sl =
     -- | helpers
     convertToAbsUrl d s = case stripPrefix "http" s of
                             Nothing -> "http://" ++ lowercase d ++ "/" ++ s
-                            Just _  -> s  
+                            Just _  -> s
     -- HandsomeSoup can only handle HTTP, not HTTPS
-    isHttp s            = case stripPrefix "https" s of 
+    isHttp s            = case stripPrefix "https" s of
                             Nothing -> True
                             Just _  -> False
     ignorePrefixes s    = not $ any (inPref s) avoidLinks where
       avoidLinks = ["mailto", "ftp", "javascript"]
       inPref y x = x `isPrefixOf` lowercase y
 
--- | Query must be a space separated list of words. 
+-- | Query must be a space separated list of words.
 --   Given: query and the full HTML text
---   Return: body of HTML if any queried words are present, 
---   otherwise the empty string (no matches found). 
+--   Return: body of HTML if any queried words are present,
+--   otherwise the empty string (no matches found).
 retPageContents :: String -> String -> IO String
 retPageContents query fulltext =
   do let doc   = readString [withParseHTML yes, withWarnings no] fulltext
@@ -72,8 +72,8 @@ querySuccess rx s = case matchRegex rx (lowercase s) of
 orOperation :: [String] -> Regex
 orOperation sl = mkRegexWithOpts (intercalate "|" sl) True False
 
-lowercase :: String -> String 
-lowercase = map toLower 
+lowercase :: String -> String
+lowercase = map toLower
 
 trim :: String -> String
 trim w = rmTrail "" $ dropWhile isSpace w
@@ -92,13 +92,13 @@ type RelPath = String
 data LineInfo =
     Allow RelPath
   | Disallow RelPath
-  | Comment 
-  | CrawlDelay Int 
+  | Comment
+  | CrawlDelay Int
   deriving (Eq, Show)
 
--- | This is the full robots.txt parser. It takes in the robots.txt 
+-- | This is the full robots.txt parser. It takes in the robots.txt
 --   body and returns a tuple with allowed/disallowed URLs and the crawl-delay.
---   Crawl-delay defaults to 1 if none is given. 
+--   Crawl-delay defaults to 1 if none is given.
 parseRobot :: String -> Robot
 parseRobot s  =
   case P.parse robotP s of
@@ -111,7 +111,7 @@ parseRobot s  =
       retRobot (_:xs)                 = retRobot xs
 
       crawlDel []                  = 1
-      crawlDel (CrawlDelay n:_)    = n 
+      crawlDel (CrawlDelay n:_)    = n
       crawlDel (_:xs)              = crawlDel xs
 
 robotP :: P.Parser [[LineInfo]]
@@ -172,6 +172,6 @@ multiCommentP = do _ <- many commentP
                    return Comment
 
 wsP :: P.Parser a -> P.Parser a
-wsP p = do n <- p 
-           _ <- many P.space             
+wsP p = do n <- p
+           _ <- many P.space
            return n

@@ -26,7 +26,7 @@ getType s = getRelPath s >>=
 -- | given relative URL, get the type of the document
 parseType :: String -> Maybe String
 parseType s =
-  if isJust $ find ((==) '.') s then Just $ last $ splitOn "." s else Nothing
+  if isJust $ find ('.' ==) s then Just $ last $ splitOn "." s else Nothing
 
 -- | given absolute URL, return whether it uses a non-secure protocol
 checkProt :: String -> Maybe Bool
@@ -37,12 +37,10 @@ checkProt s = importURL s >>= \ x -> case url_type x of
 -- | given absolute URL and relative URL, return whether the relative path is
 -- within the absolute path
 matchPath :: String -> String -> Bool
-matchPath a r = if null r then False else maybe False f (getRelPath a) where
+matchPath a r = not (null r) && maybe False f (getRelPath a) where
     f x = validPrefix r x ||
-            if not (null r) && head r == '/' then validPrefix (tail r) x
-            else False
+            ((not (null r) && head r == '/') && validPrefix (tail r) x)
     validPrefix [p]    (s:sl:_) = p == s && (p == '/' || sl == '/')
-    validPrefix (p:ps) (s:st)   = if p == s then validPrefix ps st else False
+    validPrefix (p:ps) (s:st)   = (p == s) && validPrefix ps st
     validPrefix []     _        = True
     validPrefix _      _        = False
-
