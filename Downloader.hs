@@ -34,6 +34,7 @@ type Query      = String
 data CrawlCheck = NoCrawl
                 | CanCrawl
                 | NeedWait
+                deriving (Eq, Show)
 
 -- Status maintains four states
 -- 1. Frontier  : storing the URLs to be crawled
@@ -63,27 +64,37 @@ execute query ord lim | ord >= lim = return ()
   currT <- liftIO getCurrentTime
   case dequeue f of
      Nothing        -> return ()
-     Just (url, f') ->
-      -- check robots information
-      case getDomain url >>= (`Map.lookup` s) of
-        Nothing -> do
-          -- robots info hasn't been retrieved yet
-          let domainM = getDomain url
-          if (isNothing domainM) then return ()
-          else do
-            getRobot status (fromJust domainM) currT
-            execute query ord lim
-        Just (robot, lastT) -> do
-          -- contain robots info, try crawl the web
-          let check = canCrawl robot lastT currT url
-          case check of
-            NoCrawl  -> do
+     Just (url, f') -> 
+      -- check if we have visited the page
+      if Hashset.member url v then do
+        put (f', v, s, rl)
+        execute query ord lim
+      else
+        -- check robots information
+        case getDomain url >>= (`Map.lookup` s) of
+          Nothing -> do 
+            -- robots info hasn't been retrieved yet
+            let domainM = getDomain url
+            if isNothing domainM then do
               put (f', v, s, rl)
               execute query ord lim
-            NeedWait -> execute query ord lim
-            CanCrawl -> do
-              getContentAndSearch status url query f'
-              execute query (ord+1) lim
+            else do
+              getRobot status (fromJust domainM) currT
+              execute query ord lim
+          Just (robot, lastT) -> do
+            -- contain robots info, try crawl the web
+            let check = canCrawl robot lastT currT url
+                domain = fromJust $ getDomain url
+            case check of
+              NoCrawl  -> do
+                put (f', v, s, rl)
+                execute query ord lim
+              NeedWait -> do
+                put (enqueue url f', v, s, rl)
+                execute query ord lim
+              CanCrawl -> do
+                getContentAndSearch status url query f' domain robot currT
+                execute query (ord+1) lim
 
 
 -- helper function for scheduler that fetch the robots.txt info
@@ -92,27 +103,29 @@ getRobot status domain currT = do
   let (f, v, s, rl) = status
   contents <- fetchContents ("http://" ++ domain ++ "/robots.txt")
   case contents of
-    Nothing  -> return ()
+    Nothing  -> put (f, v, Map.insert domain (([],1), currT) s, rl)
     Just con -> put (f, v, Map.insert domain
                      (parseRobot con, currT) s, rl)
 
 -- helper function for scheduler that fetch the web page, parse and search
 -- for keywords
-getContentAndSearch :: Status -> URL -> Query -> Frontier -> StateT Status IO ()
-getContentAndSearch status url query f' = do
+getContentAndSearch :: Status -> URL -> Query -> Frontier -> String
+                              -> Robot -> UTCTime -> StateT Status IO ()
+getContentAndSearch status url query f' domain robot currT = do
   let (_, v, s, rl) = status
+  let s'  = Map.insert domain (robot, currT) s
   contents <- fetchContents url
   -- parse the document to get contained URLs and see if any query word matched
   case contents >>= (Just . parseDoc url query) of
-    Nothing  -> put (f', v, s, rl)
+    Nothing  -> put (f', v, s', rl)
     Just result -> do
       (urls, doc) <- liftIO result
       let v'  = Hashset.insert url v
           f'' = Prelude.foldr enqueue f' urls
       if Prelude.null doc then
-        put (f'', v', s, rl)
+        put (f'', v', s', rl)
       else
-        put (f'', v', s, (url, doc) : rl)
+        put (f'', v', s', (url, doc) : rl)
 
 -- helper function that fetch the contents from an URL
 fetchContents :: (MonadIO m) => URL -> m (Maybe String)
@@ -135,7 +148,7 @@ typeAllow url = case getType url >>= \x -> find (x ==) allowedTypes of
                   Nothing -> False
                   Just _  -> True
 
--- Check if enough time has passed since last crawl
+-- Check if not enough time has passed since last crawl
 timeAllow :: UTCTime -> UTCTime -> Int -> Bool
 timeAllow lastT currT delay =
   (realToFrac $ diffUTCTime currT lastT :: Double) <
