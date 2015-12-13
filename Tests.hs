@@ -112,7 +112,8 @@ tMatchPath7 :: Test
 tMatchPath7 = matchPath "https://global.upenn.edu/isss/opt" "/isss/opt"
   ~?= True
 
--- tests for PageParsers.hs
+-- | Tests for PagePager.hs: webpage HTML parsing
+
 tParseWebpageFns :: Test
 tParseWebpageFns = TestList 
   [tParseDocFail, tParseDocFail, tListUrls, tRetPageContents,
@@ -196,7 +197,8 @@ tRmTrail = "remove trailing spaces" ~:
             rmTrail "" "   hi   do   "    ~?= "   hi   do",
             rmTrail "IH" "   hi   do   "  ~?= "HI   hi   do"]
 
--- | test strings for the robots.txt parser
+-- | Tests for PagePager.hs: robots.txt parsing
+
 tRobotsTxtFns :: Test
 tRobotsTxtFns = TestList 
   [tParseComment, tParseMultiComment, tParseNotOurUserAgent, 
