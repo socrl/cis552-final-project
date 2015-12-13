@@ -153,11 +153,11 @@ disallowPath :: URL -> LineInfo -> Bool
 disallowPath url li =
   case li of
     Disallow p -> matchPath url p
-    otherwise  -> False
+    _          -> False
 
 -- Check if a line info allow a path
 allowPath :: URL -> LineInfo -> Bool
 allowPath url li =
   case li of
     Allow p   -> matchPath url p
-    otherwise -> False
+    _         -> False
