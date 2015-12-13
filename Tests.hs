@@ -327,5 +327,6 @@ main = do
                              tMatchPath6, tMatchPath7]
   _ <- runTestTT tParseWebpageFns
   _ <- runTestTT tRobotsTxtFns
+  _ <- runTestTT tDownloaderTests
   return ()
 
