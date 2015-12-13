@@ -141,14 +141,23 @@ timeAllow lastT currT delay =
 
 -- Check if the url is allowed to crawl based on path info from Robots.txt
 pathAllow :: [LineInfo] -> URL -> Bool
-pathAllow ll url = Prelude.foldr (&&) True $ Prelude.map (lineCheck url) ll
+pathAllow ll url = not $ (&&) (pathCheck url ll disallowPath) 
+                              (not $ pathCheck url ll allowPath)
 
--- Check if the line info is compatible with a url
-lineCheck :: URL -> LineInfo -> Bool
-lineCheck url li = 
+-- Check if any line info disallow crawling the path
+pathCheck :: URL -> [LineInfo] -> (URL -> LineInfo -> Bool) -> Bool
+pathCheck url ll check = Prelude.foldr (||) False $ Prelude.map (check url) ll
+
+-- Check if a line info disallow a path
+disallowPath :: URL -> LineInfo -> Bool
+disallowPath url li =
   case li of
-    Allow    p   -> matchPath url p
-    Disallow p   -> not $ matchPath url p
-    Comment      -> True
-    CrawlDelay _ -> True
+    Disallow p -> matchPath url p
+    otherwise  -> False
 
+-- Check if a line info allow a path
+allowPath :: URL -> LineInfo -> Bool
+allowPath url li =
+  case li of
+    Allow p   -> matchPath url p
+    otherwise -> False

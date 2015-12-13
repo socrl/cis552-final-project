@@ -210,6 +210,25 @@ tTypeAllow3 = typeAllow "http://www.dcs.bbk.ac.uk/~martin/sewn/ls3/testpage.html
 tTypeAllow4 :: Test
 tTypeAllow4 = typeAllow "http://www.dcs.bbk.ac.uk/~martin/sewn/ls3/images/GoodGoing-YouGotTheLink.jpg" ~?= False
 
+robotInfo1 :: [P.LineInfo]
+robotInfo1 = [P.Disallow "/search", P.Allow "/search/about", P.Disallow "/sdch", P.Disallow "/groups"]
+
+tPathAllow1 :: Test
+tPathAllow1 = pathAllow robotInfo1 "http://www.test.com/search/other/index.php" ~?= False
+
+tPathAllow2 :: Test
+tPathAllow2 = pathAllow robotInfo1 "http://www.test.com/search/about/index.php" ~?= True
+
+tPathAllow3 :: Test
+tPathAllow3 = pathAllow robotInfo1 "http://www.test.com/something/else.html" ~?= True
+
+tPathAllow4 :: Test
+tPathAllow4 = pathAllow robotInfo1 "http://www.test.com/search/other/index.php" ~?= False
+
+
+tDownloaderTests :: [Test]
+tDownloaderTests = [tTypeAllow1, tTypeAllow2, tTypeAllow3, tTypeAllow4,
+                    tPathAllow1, tPathAllow2, tPathAllow3, tPathAllow4]
 
 
 main :: IO ()
