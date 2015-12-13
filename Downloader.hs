@@ -45,7 +45,7 @@ data CrawlCheck = NoCrawl
 type Status = (Frontier, Visited, ServerInfo, [Result])
 
 allowedTypes :: [String]
-allowedTypes = ["html", "php", "txt"]
+allowedTypes = ["html", "php", "txt", "aspx"]
 
 -- API for top level function, pass in a starting URL address,
 -- a search query and upper limit of # of pages to crawl
