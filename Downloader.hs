@@ -63,13 +63,16 @@ execute query ord lim | ord >= lim = return ()
   currT <- liftIO getCurrentTime
   case dequeue f of 
      Nothing        -> return ()
-     Just (url, f') -> do
+     Just (url, f') ->
       -- check robots information
-      case getDomain url >>= (\host -> Map.lookup host s) of
+      case getDomain url >>= (`Map.lookup` s) of
         Nothing -> do 
           -- robots info hasn't been retrieved yet
-          getRobot status url currT
-          execute query ord lim
+          let domainM = getDomain url
+          if (isNothing domainM) then return ()
+          else do
+            getRobot status (fromJust domainM) currT
+            execute query ord lim
         Just (robot, lastT) -> do
           -- contain robots info, try crawl the web
           let check = canCrawl robot lastT currT url 
@@ -84,15 +87,14 @@ execute query ord lim | ord >= lim = return ()
 
 
 -- helper function for scheduler that fetch the robots.txt info
-getRobot :: Status -> URL -> UTCTime -> StateT Status IO ()
-getRobot status url currT = do
-  let (f, v, s, rl) = status
-      domain = fromJust $ getDomain url
+getRobot :: Status -> String -> UTCTime -> StateT Status IO ()
+getRobot status domain currT = do
+  let (f, v, s, rl) = status 
   contents <- fetchContents ("http://" ++ domain ++ "/robots.txt")
   case contents of
     Nothing  -> return ()
     Just con -> put (f, v, Map.insert domain 
-                     ((parseRobot con), currT) s, rl)
+                     (parseRobot con, currT) s, rl)
                    
 -- helper function for scheduler that fetch the web page, parse and search
 -- for keywords
@@ -101,12 +103,12 @@ getContentAndSearch status url query f' = do
   let (_, v, s, rl) = status
   contents <- fetchContents url 
   -- parse the document to get contained URLs and see if any query word matched
-  case contents >>= (Just . (parseDoc url query)) of
+  case contents >>= (Just . parseDoc url query) of
     Nothing  -> put (f', v, s, rl)
     Just result -> do 
       (urls, doc) <- liftIO result
       let v'  = Hashset.insert url v
-          f'' = Prelude.foldr (\u front -> enqueue u front) f' urls
+          f'' = Prelude.foldr enqueue f' urls
       if Prelude.null doc then
         put (f'', v', s, rl)
       else
@@ -122,10 +124,10 @@ fetchContents url = liftIO $ catch ((liftIO . runMaybeT . openUrl) url)
 
 -- check if the url can be crawled with three possible states
 canCrawl :: Robot -> UTCTime -> UTCTime -> URL -> CrawlCheck
-canCrawl (ll, delay) lastT currT url = 
-  if not (pathAllow ll url && typeAllow url) then NoCrawl
-    else if timeAllow lastT currT delay then NeedWait
-      else CanCrawl
+canCrawl (ll, delay) lastT currT url
+  | not (pathAllow ll url && typeAllow url) = NoCrawl
+  | timeAllow lastT currT delay             = NeedWait
+  | otherwise                               = CanCrawl
 
 -- Check if the URL has proper type for crawling
 typeAllow :: URL -> Bool
@@ -146,7 +148,7 @@ pathAllow ll url = not $ (&&) (pathCheck url ll disallowPath)
 
 -- Check if any line info disallow crawling the path
 pathCheck :: URL -> [LineInfo] -> (URL -> LineInfo -> Bool) -> Bool
-pathCheck url ll check = Prelude.foldr (||) False $ Prelude.map (check url) ll
+pathCheck url ll check = any (check url) ll
 
 -- Check if a line info disallow a path
 disallowPath :: URL -> LineInfo -> Bool
