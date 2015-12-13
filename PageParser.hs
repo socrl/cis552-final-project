@@ -11,14 +11,7 @@ import Text.HandsomeSoup
 import qualified UrlUtils as U
 import Data.List
 
-type Robot = ([LineInfo], Int)
-type RelPath = String
-data LineInfo =
-    Allow RelPath
-  | Disallow RelPath
-  | Comment
-  | CrawlDelay Int
-  deriving (Eq, Show)
+-- | PARSE WEBPAGE HTML
 
 -- | Given: an absolute URL, a space-separated list of words to search for,
 --         and a string of the HTML webpage.
@@ -36,6 +29,8 @@ parseDoc url query fulltext =
          sps <- retPageContents query fulltext
          return (listUrls domain sl, trim sps)
 
+-- | Given: domain and list of URLs found in the HTML.
+--   Return: list of absolute URLs in page
 listUrls :: String -> [String] -> [String]
 listUrls domain sl =
   filter (isHttp . lowercase) $ map (convertToAbsUrl domain . lowercase)
@@ -44,6 +39,7 @@ listUrls domain sl =
     convertToAbsUrl d s = case stripPrefix "http" s of
                             Nothing -> "http://" ++ lowercase d ++ "/" ++ s
                             Just _  -> s
+    -- HandsomeSoup can only handle HTTP, not HTTPS
     isHttp s            = case stripPrefix "https" s of
                             Nothing -> True
                             Just _  -> False
@@ -51,7 +47,10 @@ listUrls domain sl =
       avoidLinks = ["mailto", "ftp", "javascript"]
       inPref y x = x `isPrefixOf` lowercase y
 
--- | query must be a space separated list of words
+-- | Query must be a space separated list of words.
+--   Given: query and the full HTML text
+--   Return: body of HTML if any queried words are present,
+--   otherwise the empty string (no matches found).
 retPageContents :: String -> String -> IO String
 retPageContents query fulltext =
   do let doc   = readString [withParseHTML yes, withWarnings no] fulltext
@@ -65,13 +64,13 @@ retPageContents query fulltext =
   subCustomRegex expr sub s = let rx = mkRegex expr in
     subRegex rx s sub
 
-orOperation :: [String] -> Regex
-orOperation sl = mkRegexWithOpts (intercalate "|" sl) True False
-
 querySuccess :: Regex -> String -> String
 querySuccess rx s = case matchRegex rx (lowercase s) of
   Nothing -> ""
   Just _  -> s
+
+orOperation :: [String] -> Regex
+orOperation sl = mkRegexWithOpts (intercalate "|" sl) True False
 
 lowercase :: String -> String
 lowercase = map toLower
@@ -80,7 +79,7 @@ trim :: String -> String
 trim w = rmTrail "" $ dropWhile isSpace w
 
 rmTrail :: String -> String -> String
-rmTrail _ ""             = ""
+rmTrail _ ""          = ""
 rmTrail m (x:xs)
     | isSpace x       = rmTrail (x:m) xs
     | null m          = x:rmTrail "" xs
@@ -88,6 +87,18 @@ rmTrail m (x:xs)
 
 -- | PARSE ROBOTS.TXT
 
+type Robot = ([LineInfo], Int)
+type RelPath = String
+data LineInfo =
+    Allow RelPath
+  | Disallow RelPath
+  | Comment
+  | CrawlDelay Int
+  deriving (Eq, Show)
+
+-- | This is the full robots.txt parser. It takes in the robots.txt
+--   body and returns a tuple with allowed/disallowed URLs and the crawl-delay.
+--   Crawl-delay defaults to 1 if none is given.
 parseRobot :: String -> Robot
 parseRobot s  =
   case P.parse robotP s of
@@ -100,18 +111,13 @@ parseRobot s  =
       retRobot (_:xs)                 = retRobot xs
 
       crawlDel []                  = 1
-      crawlDel (CrawlDelay n:_)  = n
+      crawlDel (CrawlDelay n:_)    = n
       crawlDel (_:xs)              = crawlDel xs
 
 robotP :: P.Parser [[LineInfo]]
 robotP = many (notOurUserAgentP <|> userAgentP)
 
--- | Applies a parser and then skips over any whitespace directly after it
-wsP :: P.Parser a -> P.Parser a
-wsP p = do n <- p
-           _ <- many P.space
-           return n
-
+-- | we are only looking for "User-Agent: *"
 userAgentP :: P.Parser [LineInfo]
 userAgentP = do _ <- multiCommentP
                 _ <- wsP isUserAgent
@@ -164,3 +170,8 @@ commentP = do _ <- P.char '#'
 multiCommentP :: P.Parser LineInfo
 multiCommentP = do _ <- many commentP
                    return Comment
+
+wsP :: P.Parser a -> P.Parser a
+wsP p = do n <- p
+           _ <- many P.space
+           return n

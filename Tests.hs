@@ -175,7 +175,7 @@ tUrlTests = TestList
              tMatchPath16, tMatchPath17, tMatchPath18, tCheckProt1, tCheckProt2,
              tCheckProt3, tCheckProt4, tCheckProt5]
 
--- tests for PageParsers.hs
+-- | Tests for PageParser.hs: webpage HTML parsing
 
 tParseWebpageFns :: Test
 tParseWebpageFns = TestList
@@ -260,7 +260,8 @@ tRmTrail = "remove trailing spaces" ~:
             rmTrail "" "   hi   do   "    ~?= "   hi   do",
             rmTrail "IH" "   hi   do   "  ~?= "HI   hi   do"]
 
--- | test strings for the robots.txt parser
+-- | Tests for PagePager.hs: robots.txt parsing
+
 tRobotsTxtFns :: Test
 tRobotsTxtFns = TestList
   [tParseComment, tParseMultiComment, tParseNotOurUserAgent,
