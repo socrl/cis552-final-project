@@ -7,6 +7,7 @@ import Data.String.Utils
 import Data.Char
 import Data.List
 import Data.Ord
+import Downloader (Result)
 
 -- | Given a list of words and a list of keywords, find the indices at which
 -- each keyword occurs
@@ -68,14 +69,14 @@ trimNonAlpha s = reverse $ f $ reverse $ f s where
 
 -- | rank the texts in descending order by their relevance to the keywords and
 -- give a good snippet
-rankPages :: [(String, String)] -> [String]
+rankPages :: [Result] -> [String]
              -> [(String, String, Double, String)]
 rankPages pgs keys = sortBy (flip $ comparing (\ (_, _, x, _) -> x))
   (map (getPgValue (keyFormat keys)) pgs)
 
 -- | given the desired keywords and a page, get an integer representing its
 -- worth and get a good snippet
-getPgValue :: [String] -> (String, String) -> (String, String, Double, String)
+getPgValue :: [String] -> Result -> (String, String, Double, String)
 getPgValue keys (url, txt) = (url, txt, val, snip) where
   m = findWords doc keys
   val = valFormula (numOccur m) (numDistinct m) (avgDist m) (length doc)

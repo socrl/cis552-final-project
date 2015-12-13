@@ -2,7 +2,7 @@
 module Main where
 
 import Text.Read
-import Downloader (Result, sendReqs)
+import Downloader (sendReqs)
 import PostProcessor
 
 -- | given a message to print, print it and get a line of string input
@@ -21,7 +21,7 @@ getIntParam s = do
     Just i -> return i
     Nothing -> getIntParam "You provided a non-integer input. Try again."
 
--- | formatting for outputting crawled pages
+-- | formatting for printing crawled pages and snippets
 formatOutput :: [(String, String, Double, String)] -> IO ()
 formatOutput ((pg, _, _, snip):xs) = do
   putStrLn $ "***** " ++ pg ++ " *****"

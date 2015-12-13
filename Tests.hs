@@ -478,4 +478,3 @@ main = do
   _ <- runTestTT tRobotsTxtFns
   _ <- runTestTT tDownloaderTests
   return ()
-
