@@ -6,6 +6,7 @@ import Downloader (sendReqs)
 import PostProcessor
 import System.IO
 import System.Environment
+import Control.Monad (unless)
 
 -- | given a message to print, print it and get a line of string input
 getStParam :: String -> IO String
@@ -44,5 +45,5 @@ main = do
   (rs, i) <- sendReqs url str num
   hPutStrLn out $ "Crawled " ++ show i ++ " pages."
   hPutStrLn out $ formatOutput $ rankPages rs (txtFormat str)
-  hClose out
+  unless (null args) $ hClose out
   putStrLn "Done."
