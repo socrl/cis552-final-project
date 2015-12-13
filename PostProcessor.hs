@@ -21,7 +21,7 @@ findWords = f Map.empty 0 where
       f m (i + 1) ws ks
   f m _ _      _  = m
 
--- | How many words should a snippet contain?
+-- | The number of words a snippet should contain
 snipSize :: Int
 snipSize = 30
 
@@ -40,6 +40,7 @@ getSnippet m = fst $ g $ f (pairs m) 0 Map.empty where
   g l = maximumBy (comparing snd) $ map val l
   val (endIndex, numOc, mapCur) = (endIndex, numOc * (numDistinct mapCur))
 
+-- | drop the values outside the snippet we are currently examining
 dropSmall :: Map String [Int] -> Int -> (Map String [Int], Int)
 dropSmall m i = (Map.fromList b, count)
   where
@@ -55,7 +56,6 @@ pairs :: Map String [Int] -> [(String, Int)]
 pairs m = sortBy (comparing snd) x where
   x = foldr (\ (key, l) accu -> (f key l) ++ accu) [] (Map.toList m)
   f k inds = foldr (\ i is -> (k, i):is) [] inds
-
 
 -- | convert a string to lowercase, wherever possible
 strLower :: String -> String
@@ -86,6 +86,8 @@ getPgValue keys (url, txt) = (url, txt, val, snip) where
   snipStartInd = max 0 (snipEndInd - 29)
   snipEndInd = getSnippet m + 1
 
+
+-- | constants for the formula
 freqWt :: Double
 freqWt = 1.5
 

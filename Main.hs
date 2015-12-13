@@ -5,19 +5,6 @@ import Text.Read
 import Downloader (Result, sendReqs)
 import PostProcessor
 
-{-
-1. tell CL to get starting URL, search string, num pages to crawl from user
-
-2. give downloader URL, search string, num pages - downloader will schedule requests (starting with robots.txt)
-
-3. downloader returns (URL, snippet)
-
-4. tell CL to print output
-
-
-
--}
-
 -- | given a message to print, print it and get a line of string input
 getStParam :: String -> IO String
 getStParam s = do
@@ -34,6 +21,7 @@ getIntParam s = do
     Just i -> return i
     Nothing -> getIntParam "You provided a non-integer input. Try again."
 
+-- | formatting for outputting crawled pages
 formatOutput :: [(String, String, Double, String)] -> IO ()
 formatOutput ((pg, _, _, snip):xs) = do
   putStrLn $ "***** " ++ pg ++ " *****"

@@ -13,7 +13,7 @@ instance Applicative (State s) where
 
 instance Monad (State s) where
   return x   = S (\s -> (x, s))
-  st >>= f   = S (\s -> let (x, s') = runState st s 
+  st >>= f   = S (\s -> let (x, s') = runState st s
                         in runState (f x) s')
 
 runState :: State s a -> s -> (a, s)
