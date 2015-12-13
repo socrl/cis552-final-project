@@ -64,7 +64,7 @@ execute query ord lim | ord >= lim = return ()
   currT <- liftIO getCurrentTime
   case dequeue f of
      Nothing        -> return ()
-     Just (url, f') -> 
+     Just (url, f') ->
       -- check if we have visited the page
       if Hashset.member url v then do
         put (f', v, s, rl)
@@ -72,7 +72,7 @@ execute query ord lim | ord >= lim = return ()
       else
         -- check robots information
         case getDomain url >>= (`Map.lookup` s) of
-          Nothing -> do 
+          Nothing -> do
             -- robots info hasn't been retrieved yet
             let domainM = getDomain url
             if isNothing domainM then do
