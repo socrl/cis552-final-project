@@ -66,7 +66,10 @@ execute query ord lim | ord >= lim = return ()
      Nothing        -> return ()
      Just (url, f') -> 
       -- check if we have visited the page
-      unless (Hashset.member url v) $
+      if Hashset.member url v then do
+        put (f', v, s, rl)
+        execute query ord lim
+      else
         -- check robots information
         case getDomain url >>= (`Map.lookup` s) of
           Nothing -> do 
