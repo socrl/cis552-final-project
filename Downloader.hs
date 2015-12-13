@@ -66,7 +66,7 @@ execute query ord lim | ord >= lim = return ()
      Just (url, f') ->
       -- check robots information
       case getDomain url >>= (`Map.lookup` s) of
-        Nothing -> do 
+        Nothing -> do
           -- robots info hasn't been retrieved yet
           let domainM = getDomain url
           if (isNothing domainM) then return ()
@@ -89,13 +89,13 @@ execute query ord lim | ord >= lim = return ()
 -- helper function for scheduler that fetch the robots.txt info
 getRobot :: Status -> String -> UTCTime -> StateT Status IO ()
 getRobot status domain currT = do
-  let (f, v, s, rl) = status 
+  let (f, v, s, rl) = status
   contents <- fetchContents ("http://" ++ domain ++ "/robots.txt")
   case contents of
     Nothing  -> return ()
-    Just con -> put (f, v, Map.insert domain 
+    Just con -> put (f, v, Map.insert domain
                      (parseRobot con, currT) s, rl)
-                   
+
 -- helper function for scheduler that fetch the web page, parse and search
 -- for keywords
 getContentAndSearch :: Status -> URL -> Query -> Frontier -> StateT Status IO ()
