@@ -64,13 +64,13 @@ retPageContents query fulltext =
   subCustomRegex expr sub s = let rx = mkRegex expr in
     subRegex rx s sub
 
-orOperation :: [String] -> Regex
-orOperation sl = mkRegexWithOpts (intercalate "|" sl) True False
-
 querySuccess :: Regex -> String -> String
 querySuccess rx s = case matchRegex rx (lowercase s) of 
   Nothing -> ""
   Just _  -> s 
+
+orOperation :: [String] -> Regex
+orOperation sl = mkRegexWithOpts (intercalate "|" sl) True False
 
 lowercase :: String -> String 
 lowercase = map toLower 
@@ -79,7 +79,7 @@ trim :: String -> String
 trim w = rmTrail "" $ dropWhile isSpace w
 
 rmTrail :: String -> String -> String
-rmTrail _ ""             = ""
+rmTrail _ ""          = ""
 rmTrail m (x:xs)
     | isSpace x       = rmTrail (x:m) xs
     | null m          = x:rmTrail "" xs
@@ -96,6 +96,9 @@ data LineInfo =
   | CrawlDelay Int 
   deriving (Eq, Show)
 
+-- | This is the full robots.txt parser. It takes in the robots.txt 
+--   body and returns a tuple with allowed/disallowed URLs and the crawl-delay.
+--   Crawl-delay defaults to 1 if none is given. 
 parseRobot :: String -> Robot
 parseRobot s  = 
   case P.parse robotP s of 
@@ -114,6 +117,7 @@ parseRobot s  =
 robotP :: P.Parser [[LineInfo]]
 robotP = many (notOurUserAgentP <|> userAgentP)
 
+-- | we are only looking for "User-Agent: *"
 userAgentP :: P.Parser [LineInfo]
 userAgentP = do _ <- multiCommentP
                 _ <- wsP isUserAgent
