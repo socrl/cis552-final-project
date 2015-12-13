@@ -28,8 +28,7 @@ formatOutput ((pg, _, _, snip):xs) = do
   putStrLn snip
   putStrLn ""
   formatOutput xs
-formatOutput [] = do
-  putStrLn ""
+formatOutput [] = putStrLn ""
 
 main :: IO ()
 main = do

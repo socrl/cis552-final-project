@@ -176,6 +176,7 @@ tUrlTests = TestList
              tCheckProt3, tCheckProt4, tCheckProt5]
 
 -- tests for PageParsers.hs
+
 tParseWebpageFns :: Test
 tParseWebpageFns = TestList
   [tParseDocFail, tParseDocFail, tListUrls, tRetPageContents,
@@ -347,8 +348,8 @@ tParseRobotsTxt = "parser for the robots.txt" ~: TestList [
                              Disallow "/search",   Allow "/search/about",
                              Disallow "/sdch"]] ]
 
-
 -- | tests for PostProcessor.hs
+
 tTrimNonAlpha1 :: Test
 tTrimNonAlpha1 = trimNonAlpha "" ~?= ""
 

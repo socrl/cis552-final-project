@@ -17,7 +17,7 @@ type PageData = (String, String, Double, String)
 findWords :: [String] -> [String] -> OccurMap
 findWords = f Map.empty 0 where
   f m i (w:ws) ks =
-    if elem w ks then
+    if w `elem` ks then
       case Map.lookup w m of
         Just l -> f (Map.insert w (l ++ [i]) m) (i + 1) ws ks
         Nothing -> f (Map.insert w [i] m) (i + 1) ws ks
@@ -42,7 +42,7 @@ getSnippet m = fst $ g $ f (pairs m) 0 Map.empty where
     newCount = k - count + 1
   f []            _ _    = []
   g l = maximumBy (comparing snd) $ map val l
-  val (endIndex, numOc, mapCur) = (endIndex, numOc * (numDistinct mapCur))
+  val (endIndex, numOc, mapCur) = (endIndex, numOc * numDistinct mapCur)
 
 -- | drop the values outside the snippet we are currently examining
 dropSmall :: OccurMap -> Int -> (OccurMap, Int)
@@ -58,12 +58,12 @@ dropSmall m i = (Map.fromList b, count)
 -- the second is an index where the key occurs, sorted based on the second
 pairs :: OccurMap -> [(String, Int)]
 pairs m = sortBy (comparing snd) x where
-  x = foldr (\ (key, l) accu -> (f key l) ++ accu) [] (Map.toList m)
-  f k inds = foldr (\ i is -> (k, i):is) [] inds
+  x = foldr (\ (key, l) accu -> f key l ++ accu) [] (Map.toList m)
+  f k = foldr (\ i is -> (k, i):is) []
 
 -- | convert a string to lowercase, wherever possible
 strLower :: String -> String
-strLower = foldr (\ c st -> (toLower c):st) ""
+strLower = foldr (\ c st -> toLower c : st) ""
 
 -- | given a String, trim non-alphanumeric character from the front and the back
 trimNonAlpha :: String -> String
@@ -85,7 +85,7 @@ getPgValue keys (url, txt) = (url, txt, val, snip) where
     (length keys)
   doc = txtFormat txt
   snip = if val == 0 then "" else
-    intercalate " " $ take (snipEndInd - snipStartInd) $ drop snipStartInd $ doc
+    unwords $ take (snipEndInd - snipStartInd) $ drop snipStartInd doc
   snipStartInd = max 0 (snipEndInd - 29)
   snipEndInd = getSnippet m + 1
 
@@ -105,7 +105,7 @@ valFormula numOc numDisti avgD lenDoc numKeys =
   freqWt * fromIntegral numOc / chkDenom lenDoc +
     diverseWt * fromIntegral numDisti / chkDenom numKeys + avgTerm
   where
-    avgTerm = if avgD > 0 then distWt / (exp 1)**avgD else 0
+    avgTerm = if avgD > 0 then distWt / exp avgD else 0
 
 -- | given a map of occurrences, determine the number of times any keyword
 -- occurred
@@ -125,12 +125,12 @@ avgDist m = lAvg $ map (\ (v, w) -> abs $ v - w) (eachPair avgs) where
 
 -- | get each unordered pair of a list
 eachPair :: [a] -> [(a, a)]
-eachPair (x:xs) = (foldr (\ a accu -> (x, a):accu) [] xs) ++ eachPair xs
+eachPair (x:xs) = foldr (\ a accu -> (x, a):accu) [] xs ++ eachPair xs
 eachPair _      = []
 
 -- | get average of a list of Doubles
 lAvg :: [Double] -> Double
-lAvg l = (sum l) / (chkDenom $ length l) where
+lAvg l = sum l / chkDenom (length l) where
 
 chkDenom :: Int -> Double
 chkDenom x = if x > 0 then fromIntegral x else 1
@@ -145,4 +145,4 @@ txtFormat doc =
 -- lowercase, remove empty strings
 keyFormat :: [String] -> [String]
 keyFormat k =
-  filter (not . null) (foldr (\ s st -> (strLower $ trimNonAlpha s):st) [] k)
+  filter (not . null) (foldr (\ s st -> strLower (trimNonAlpha s) : st) [] k)
