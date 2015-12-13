@@ -63,27 +63,30 @@ execute query ord lim | ord >= lim = return ()
   currT <- liftIO getCurrentTime
   case dequeue f of
      Nothing        -> return ()
-     Just (url, f') ->
-      -- check robots information
-      case getDomain url >>= (`Map.lookup` s) of
-        Nothing -> do 
-          -- robots info hasn't been retrieved yet
-          let domainM = getDomain url
-          if (isNothing domainM) then return ()
-          else do
-            getRobot status (fromJust domainM) currT
-            execute query ord lim
-        Just (robot, lastT) -> do
-          -- contain robots info, try crawl the web
-          let check = canCrawl robot lastT currT url
-          case check of
-            NoCrawl  -> do
-              put (f', v, s, rl)
+     Just (url, f') -> do
+      -- check if we have visited the page
+      if (Hashset.member url v) then return ()
+      else 
+        -- check robots information
+        case getDomain url >>= (`Map.lookup` s) of
+          Nothing -> do 
+            -- robots info hasn't been retrieved yet
+            let domainM = getDomain url
+            if (isNothing domainM) then return ()
+            else do
+              getRobot status (fromJust domainM) currT
               execute query ord lim
-            NeedWait -> execute query ord lim
-            CanCrawl -> do
-              getContentAndSearch status url query f'
-              execute query (ord+1) lim
+          Just (robot, lastT) -> do
+            -- contain robots info, try crawl the web
+            let check = canCrawl robot lastT currT url
+            case check of
+              NoCrawl  -> do
+                put (f', v, s, rl)
+                execute query ord lim
+              NeedWait -> execute query ord lim
+              CanCrawl -> do
+                getContentAndSearch status url query f'
+                execute query (ord+1) lim
 
 
 -- helper function for scheduler that fetch the robots.txt info
