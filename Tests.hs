@@ -482,5 +482,6 @@ main = do
   _ <- runTestTT tPostProcTests
   _ <- runTestTT tParseWebpageFns
   _ <- runTestTT tRobotsTxtFns
+  _ <- runTestTT tDownloaderTests
   return ()
 
