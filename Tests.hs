@@ -2,18 +2,12 @@
 module Tests where
 
 import Test.HUnit
-
-import Test.QuickCheck (Arbitrary(..), Testable(..), Gen, elements, 
-  oneof, frequency, sized, quickCheckWith, stdArgs, maxSize, maxSuccess)
 import Control.Monad (unless)
-
 import PageParser 
 import ParserCombinators
 import Text.Regex
 import UrlUtils
 import qualified PageParser as P
-import qualified Parser as P
-import qualified ParserCombinators as P
 import PostProcessor
 import Data.Map (Map)
 import qualified Data.Map as Map
