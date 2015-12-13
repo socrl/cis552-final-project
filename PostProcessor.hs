@@ -7,10 +7,14 @@ import Data.String.Utils
 import Data.Char
 import Data.List
 import Data.Ord
+import Downloader (Result)
+
+type OccurMap = Map String [Int]
+type PageData = (String, String, Double, String)
 
 -- | Given a list of words and a list of keywords, find the indices at which
 -- each keyword occurs
-findWords :: [String] -> [String] -> Map String [Int]
+findWords :: [String] -> [String] -> OccurMap
 findWords = f Map.empty 0 where
   f m i (w:ws) ks =
     if elem w ks then
@@ -21,12 +25,12 @@ findWords = f Map.empty 0 where
       f m (i + 1) ws ks
   f m _ _      _  = m
 
--- | How many words should a snippet contain?
+-- | The number of words a snippet should contain
 snipSize :: Int
 snipSize = 30
 
 -- | Given a map, total number of keys, get the end index of a good snippet
-getSnippet :: Map String [Int] -> Int
+getSnippet :: OccurMap -> Int
 getSnippet m = fst $ g $ f (pairs m) 0 Map.empty where
   -- | while iterating, maintain the following: endIndex, num keywords in
   -- window, map
@@ -40,7 +44,8 @@ getSnippet m = fst $ g $ f (pairs m) 0 Map.empty where
   g l = maximumBy (comparing snd) $ map val l
   val (endIndex, numOc, mapCur) = (endIndex, numOc * (numDistinct mapCur))
 
-dropSmall :: Map String [Int] -> Int -> (Map String [Int], Int)
+-- | drop the values outside the snippet we are currently examining
+dropSmall :: OccurMap -> Int -> (OccurMap, Int)
 dropSmall m i = (Map.fromList b, count)
   where
     a = Map.toList m
@@ -51,11 +56,10 @@ dropSmall m i = (Map.fromList b, count)
 
 -- | given a map of occurrences, create a tuple where the first is the key and
 -- the second is an index where the key occurs, sorted based on the second
-pairs :: Map String [Int] -> [(String, Int)]
+pairs :: OccurMap -> [(String, Int)]
 pairs m = sortBy (comparing snd) x where
   x = foldr (\ (key, l) accu -> (f key l) ++ accu) [] (Map.toList m)
   f k inds = foldr (\ i is -> (k, i):is) [] inds
-
 
 -- | convert a string to lowercase, wherever possible
 strLower :: String -> String
@@ -68,14 +72,13 @@ trimNonAlpha s = reverse $ f $ reverse $ f s where
 
 -- | rank the texts in descending order by their relevance to the keywords and
 -- give a good snippet
-rankPages :: [(String, String)] -> [String]
-             -> [(String, String, Double, String)]
+rankPages :: [Result] -> [String] -> [PageData]
 rankPages pgs keys = sortBy (flip $ comparing (\ (_, _, x, _) -> x))
   (map (getPgValue (keyFormat keys)) pgs)
 
 -- | given the desired keywords and a page, get an integer representing its
 -- worth and get a good snippet
-getPgValue :: [String] -> (String, String) -> (String, String, Double, String)
+getPgValue :: [String] -> Result -> PageData
 getPgValue keys (url, txt) = (url, txt, val, snip) where
   m = findWords doc keys
   val = valFormula (numOccur m) (numDistinct m) (avgDist m) (length doc)
@@ -86,6 +89,7 @@ getPgValue keys (url, txt) = (url, txt, val, snip) where
   snipStartInd = max 0 (snipEndInd - 29)
   snipEndInd = getSnippet m + 1
 
+-- | constants for the formula
 freqWt :: Double
 freqWt = 1.5
 
@@ -105,17 +109,17 @@ valFormula numOc numDisti avgD lenDoc numKeys =
 
 -- | given a map of occurrences, determine the number of times any keyword
 -- occurred
-numOccur :: Map String [Int] -> Int
+numOccur :: OccurMap -> Int
 numOccur m = foldr (\ x accu -> length x + accu) 0 (Map.elems m)
 
 -- | given a map of occurrences, determine the number of distinct keywords that
 -- occurred
-numDistinct :: Map String [Int] -> Int
+numDistinct :: OccurMap -> Int
 numDistinct = Map.size
 
 -- | given a map of occurrences, determine the average number of words between
 -- occurrences of keywords
-avgDist :: Map String [Int] -> Double
+avgDist :: OccurMap -> Double
 avgDist m = lAvg $ map (\ (v, w) -> abs $ v - w) (eachPair avgs) where
   avgs = map (\ (_, l) -> lAvg $ map fromIntegral l) (Map.toList m)
 

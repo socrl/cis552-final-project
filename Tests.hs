@@ -3,13 +3,12 @@ module Tests where
 
 import Test.HUnit
 import Control.Monad (unless)
-import PageParser 
+import PageParser
 import ParserCombinators
 import Text.Regex
 import UrlUtils
 import qualified PageParser as P
 import PostProcessor
-import Data.Map (Map)
 import qualified Data.Map as Map
 import Downloader
 
@@ -179,7 +178,7 @@ tUrlTests = TestList
 -- | Tests for PagePager.hs: webpage HTML parsing
 
 tParseWebpageFns :: Test
-tParseWebpageFns = TestList 
+tParseWebpageFns = TestList
   [tParseDocFail, tParseDocFail, tListUrls, tRetPageContents,
    tQuerySuccess, tOrOperation, tLowercase, tTrim, tRmTrail]
 
@@ -199,43 +198,43 @@ orRegex :: Regex
 orRegex = mkRegex "hello|hey|hi"
 
 tParseDocFail :: Test
-tParseDocFail = TestCase $ 
+tParseDocFail = TestCase $
   do out <- parseDoc "http://www.seas.upenn.edu/~cse262/"
-                     "CANNOTFINDQUERY" 
+                     "CANNOTFINDQUERY"
                      testHTML
-     assertEqual "parse cis262 page" 
+     assertEqual "parse cis262 page"
         out (validUrlsForParseDoc, "")
 
 tParseDocSuccess :: Test
-tParseDocSuccess = TestCase $ 
+tParseDocSuccess = TestCase $
   do out <- parseDoc "http://www.seas.upenn.edu/~cse262/"
-                     "THEORY TURING potato" 
+                     "THEORY TURING potato"
                      testHTML
-     assertEqual "parse cis262 page" 
+     assertEqual "parse cis262 page"
         out (validUrlsForParseDoc, outputStringForParseDoc)
 
-tListUrls :: Test 
-tListUrls = listUrls "google.com" ["relpath.txt", 
-                                   "www.stillarelpath.com", 
-                                   "http://validsite.com", 
-                                   "https://ignoreme.com", 
+tListUrls :: Test
+tListUrls = listUrls "google.com" ["relpath.txt",
+                                   "www.stillarelpath.com",
+                                   "http://validsite.com",
+                                   "https://ignoreme.com",
                                    "javascript:void(0)",
                                    "ftp://noparse",
                                    "HTTP://HI.com",
-                                   "mailto:kchen2013@gmail.com"] 
+                                   "mailto:kchen2013@gmail.com"]
                      ~?= ["http://google.com/relpath.txt",
                           "http://google.com/www.stillarelpath.com",
                           "http://validsite.com",
                           "http://hi.com"]
 
 tRetPageContents :: Test
-tRetPageContents = TestCase $ 
+tRetPageContents = TestCase $
   do out <- retPageContents "fluorescent orange computability "
                             testHTML
-     assertEqual "check if any of these words are in page" 
+     assertEqual "check if any of these words are in page"
         out ("    " ++ outputStringForParseDoc ++ "  ")
 
-tQuerySuccess :: Test 
+tQuerySuccess :: Test
 tQuerySuccess = "check if regex is found in the string" ~:
   TestList [ querySuccess helloRegex "How is it going?" ~?= "",
              querySuccess helloRegex "hello!"           ~?= "hello!",
@@ -243,29 +242,29 @@ tQuerySuccess = "check if regex is found in the string" ~:
              querySuccess orRegex    "appleHElLo!"      ~?= "appleHElLo!",
              querySuccess helloRegex "nothing here"     ~?= ""]
 
-tOrOperation :: Test 
+tOrOperation :: Test
 tOrOperation = querySuccess (orOperation ["hello", "hey", "hi"]) "oh hey!" ~?=
                querySuccess orRegex                              "oh hey!"
 
 tLowercase :: Test
 tLowercase = lowercase "HI how 1234 ArE you" ~?= "hi how 1234 are you"
 
-tTrim :: Test 
-tTrim = "trim test cases" ~: 
-  TestList [trim ""  ~?= "", 
+tTrim :: Test
+tTrim = "trim test cases" ~:
+  TestList [trim ""  ~?= "",
             trim "  hi   do   "  ~?= "hi   do"]
 
-tRmTrail :: Test 
+tRmTrail :: Test
 tRmTrail = "remove trailing spaces" ~:
-  TestList [rmTrail "" ""                 ~?= "", 
+  TestList [rmTrail "" ""                 ~?= "",
             rmTrail "" "   hi   do   "    ~?= "   hi   do",
             rmTrail "IH" "   hi   do   "  ~?= "HI   hi   do"]
 
 -- | Tests for PagePager.hs: robots.txt parsing
 
 tRobotsTxtFns :: Test
-tRobotsTxtFns = TestList 
-  [tParseComment, tParseMultiComment, tParseNotOurUserAgent, 
+tRobotsTxtFns = TestList
+  [tParseComment, tParseMultiComment, tParseNotOurUserAgent,
    tParseTgtUserAgent, tParseRobotsTxt]
 
 -- | tests for PageParsers.hs
@@ -282,7 +281,7 @@ notOurUserAgent = "User-agent: Mediapartners-Google*\nDisallow: /\n"
 agentCommentMix :: String
 agentCommentMix = multilineComment ++ notOurUserAgent ++ "\n# Wikipedia work bots:\nUser-agent: *\nDisallow: /\n"
 
-validUserAgent :: String 
+validUserAgent :: String
 validUserAgent = "User-agent: *\nDisallow: /search\nAllow: /search/about\nDisallow: /sdch\nDisallow: /groups\nDisallow: /catalogs\nAllow: /catalogs/about\nAllow: /catalogs/p?\nDisallow: /catalogues\n"
 
 userAgentInlineComment :: String
@@ -301,14 +300,14 @@ tParseComment :: Test
 tParseComment = "1-line comment" ~: parse commentP comment ~?= Right Comment
 
 tParseMultiComment :: Test
-tParseMultiComment = "multiline comment" ~: parse multiCommentP multilineComment 
+tParseMultiComment = "multiline comment" ~: parse multiCommentP multilineComment
                                          ~?= Right Comment
 
 tParseNotOurUserAgent :: Test
 tParseNotOurUserAgent = "parser ignores this user agent" ~: TestList [
-  "not our agent success"   ~: parse notOurUserAgentP notOurUserAgent 
+  "not our agent success"   ~: parse notOurUserAgentP notOurUserAgent
                             ~?= Right [],
-  -- | our "not our user agent" parser should fail when presented with the 
+  -- | our "not our user agent" parser should fail when presented with the
   --   agent we should be parsing for.
   "not our agent fail"      ~: parse notOurUserAgentP validUserAgent
                             ~?= Left "No parses" ]
@@ -318,11 +317,11 @@ tParseTgtUserAgent :: Test
 tParseTgtUserAgent = "parser returns this agent's info" ~: TestList [
   "tgt agent success"    ~: parse userAgentP validUserAgent
                   ~?= Right [Disallow "/search",   Allow "/search/about",
-                             Disallow "/sdch",     Disallow "/groups", 
-                             Disallow "/catalogs", Allow "/catalogs/about", 
+                             Disallow "/sdch",     Disallow "/groups",
+                             Disallow "/catalogs", Allow "/catalogs/about",
                              Allow "/catalogs/p?", Disallow "/catalogues"],
    "tgt agent crawl del" ~: parse userAgentP userAgentCrawlDelay
-                  ~?= Right [CrawlDelay 10,         
+                  ~?= Right [CrawlDelay 10,
                              Disallow "/search",   Allow "/search/about",
                              Disallow "/sdch"],
    "not our agent fail"  ~: parse userAgentP notOurUserAgent
@@ -331,7 +330,7 @@ tParseTgtUserAgent = "parser returns this agent's info" ~: TestList [
 
 tParseRobotsTxt :: Test
 tParseRobotsTxt = "parser for the robots.txt" ~: TestList [
-  "simple comments and agents" ~: parse robotP agentCommentMix 
+  "simple comments and agents" ~: parse robotP agentCommentMix
             ~?= Right [[], [Disallow "/"]],
   "agent with in-line comment" ~: parse robotP userAgentInlineComment
             ~?= Right [[Disallow "/search",   Allow "/search/about",
@@ -346,7 +345,7 @@ tParseRobotsTxt = "parser for the robots.txt" ~: TestList [
                        Disallow "/wiki/Wikipedia:Strony_do_usuni%C4%99cia"]],
   "robots with sitemap"       ~: parse robotP fullRobotsTxt
             ~?= Right [[],
-                       [CrawlDelay 10,         
+                       [CrawlDelay 10,
                              Disallow "/search",   Allow "/search/about",
                              Disallow "/sdch"]] ]
 
@@ -370,7 +369,7 @@ str1 = "Huang Weikai assembles footage from a dozen amateur videographers and we
 key1 :: [String]
 key1 = ["assembles", "UrBaN", "huang", "duck", "dysfunction", "a"]
 
-map1 :: Map String [Int]
+map1 :: OccurMap
 map1 = Map.fromList [("huang", [0]), ("assembles", [2]), ("urban", [17]), ("a", [5, 13]), ("dysfunction", [19])]
 
 str2 :: String
@@ -379,7 +378,7 @@ str2 = "Festen is best known for being the first Dogme 95 film (its full title i
 key2 :: [String]
 key2 = ["FESTEN", "dogme", "95", "facebook"]
 
-map2 :: Map String [Int]
+map2 :: OccurMap
 map2 = Map.fromList [("festen", [0, 19]), ("dogme", [8, 17, 20]), ("95", [9])]
 
 tFindWords1 :: Test
@@ -480,4 +479,3 @@ main = do
   _ <- runTestTT tRobotsTxtFns
   _ <- runTestTT tDownloaderTests
   return ()
-
