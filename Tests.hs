@@ -428,7 +428,7 @@ tGetPgValue2 = TestCase $ assertEquals "" delt 184.7949 x where
 
 tRankPages1 :: Test
 tRankPages1 = rankPages [("URL1", str1), ("URL2", str2)] ["URbAn"] ~?=
-  [("URL1", str1, 2.075, "huang weikai assembles footage from a dozen amateur videographers and weaves them into a unique symphony of urban"), ("URL2", str2, 0, "")]
+  [("URL1", str1, 2.075, "huang weikai assembles footage from a dozen amateur videographers and weaves them into a unique symphony of urban")]
 
 tPostProcTests :: Test
 tPostProcTests = TestList

@@ -73,8 +73,10 @@ trimNonAlpha s = reverse $ f $ reverse $ f s where
 -- | rank the texts in descending order by their relevance to the keywords and
 -- give a good snippet
 rankPages :: [Result] -> [String] -> [PageData]
-rankPages pgs keys = sortBy (flip $ comparing (\ (_, _, x, _) -> x))
-  (map (getPgValue (keyFormat keys)) pgs)
+rankPages pgs keys = sortBy (flip $ comparing (\ (_, _, x, _) -> x)) $
+  f (map (getPgValue (keyFormat keys)) pgs)
+  where
+    f = filter (\ (_, _, _, snip) -> not (null snip))
 
 -- | given the desired keywords and a page, get an integer representing its
 -- worth and get a good snippet
