@@ -1,24 +1,29 @@
 # cis552-final-project
 Lingbin Cai, Kathy Chen, Socrates Li
 
---- Names & PennKeys --- 
+====
+Names & PennKeys 
 Kathleen Chen (katch)
 Lingbin Cai (lingbinc)
 Socrates Li (socrali)
 
---- Instructions ---
+====
+Instructions
 Run in command line: export LANG=C
-    This step is necessary because some unicode may not be parsed properly (See http://stackoverflow.com/questions/5047626/matching-specific-unicode-char-in-haskell-regexp)
-    Compile with: ghc -o crawler Main.hs
-        This step is necessary because ghci by default does not handle the delete key well, so we have to compile it as an executable
-        Run with: ./crawler
-            Make sure to provide an absolute URL, such as http://www.cis.upenn.edu/index.php.
+This step is necessary because some unicode may not be parsed properly (See http://stackoverflow.com/questions/5047626/matching-specific-unicode-char-in-haskell-regexp)
 
-            You can clean the directory with: rm *.o *.hi
+Compile with: ghc -o crawler Main.hs
+This step is necessary because ghci by default does not handle the delete key well, so we have to compile it as an executable
 
-            To write the output to a file, provide the filename as an argument. It will be truncated if it exists or created if it doesn’t exist.
+Run with: ./crawler
+Make sure to provide an absolute URL, such as http://www.cis.upenn.edu/index.php.
 
-            --- Overview of files in project (in the order they are read) ---
+You can clean the directory with: rm *.o *.hi
+
+To write the output to a file, provide the filename as an argument. It will be truncated if it exists or created if it doesn’t exist.
+
+====
+Overview of files in project (in the order they are read) 
             Main.hs - Provide the command line interface that gets user input for crawling, sends requests to Downloader and reroute the results to Postprocessor, and eventually outputs the ranked results.
 
             Downloader.hs - Schedule the downloading requests in BFS manner. When crawling a new page, (1) fetch the robots.txt file from the server if not yet attained, parse and store the crawling information; (2) schedule the requests following the rules set by robots.txt; (3) fetch content of the page, parse and store the ones that contain keywords as result; (4) get URLs contained in the page, put those into the queue and keep crawling the next one. All parsing are done through PageParser module.
@@ -33,13 +38,15 @@ Run in command line: export LANG=C
 
             Test.hs - Contains all HUnit test cases.
 
-            --- Additional dependencies ---
+====
+Additional dependencies
             Data.String.Utils - cabal install MissingH
             Text.HandsomeSoup, Text.XML.HXT.Core - cabal install HandsomeSoup
             Network.URL - cabal install url
             Text.Regex - cabal install regex-compat
 
-            --- Example ---
+====
+Example
             Provide a starting URL.
             http://www.cis.upenn.edu
             Provide whitespace-delimited keywords you want to search for.
