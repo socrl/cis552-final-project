@@ -22,7 +22,7 @@ getIntParam s = do
     Nothing -> getIntParam "You provided a non-integer input. Try again."
 
 -- | formatting for printing crawled pages and snippets
-formatOutput :: [(String, String, Double, String)] -> IO ()
+formatOutput :: [PageData] -> IO ()
 formatOutput ((pg, _, _, snip):xs) = do
   putStrLn $ "***** " ++ pg ++ " *****"
   putStrLn snip

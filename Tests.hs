@@ -9,7 +9,6 @@ import Text.Regex
 import UrlUtils
 import qualified PageParser as P
 import PostProcessor
-import Data.Map (Map)
 import qualified Data.Map as Map
 import Downloader
 
@@ -368,7 +367,7 @@ str1 = "Huang Weikai assembles footage from a dozen amateur videographers and we
 key1 :: [String]
 key1 = ["assembles", "UrBaN", "huang", "duck", "dysfunction", "a"]
 
-map1 :: Map String [Int]
+map1 :: OccurMap
 map1 = Map.fromList [("huang", [0]), ("assembles", [2]), ("urban", [17]), ("a", [5, 13]), ("dysfunction", [19])]
 
 str2 :: String
@@ -377,7 +376,7 @@ str2 = "Festen is best known for being the first Dogme 95 film (its full title i
 key2 :: [String]
 key2 = ["FESTEN", "dogme", "95", "facebook"]
 
-map2 :: Map String [Int]
+map2 :: OccurMap
 map2 = Map.fromList [("festen", [0, 19]), ("dogme", [8, 17, 20]), ("95", [9])]
 
 tFindWords1 :: Test
